@@ -564,4 +564,59 @@ fromPersistJson (PersistJson v) = case A.fromJSON v of
                                     A.Success x -> Right x
 
 
+findByEntityKey :: (Element seq ~ Entity record, SemiSequence seq, Eq (Key record))
+                => Key record
+                -> seq
+                -> Maybe (Entity record)
+findByEntityKey k = find ((== k) . entityKey)
+
+
+entitiesToMap :: (ContainerKey c ~ Key record, MapValue c ~ record, IsMap c)
+              => [Entity record]
+              -> c
+entitiesToMap = mapFromList . map (entityKey &&& entityVal)
+
+
+-- | 例如可以把 'get' 的返回值变成 Maybe (Entity a)
+attachEntityKey :: (PersistEntity record, Functor m, Functor f)
+                => (Key record -> m (f record))
+                -> Key record
+                -> m (f (Entity record))
+attachEntityKey = attachEntityKey' Entity
+
+
+attachEntityKey' :: (PersistEntity record, Functor m, Functor f)
+                 => (Key record -> record -> a)
+                 -> (Key record -> m (f record))
+                 -> Key record
+                 -> m (f a)
+attachEntityKey' h g rec_id = fmap (fmap (h rec_id)) $ g rec_id
+
+
+-- | 含有 deleted 字段的 PersistEntity
+class PersistEntity a => HasEntityFieldDeleted a where
+  entityFieldDeleted :: EntityField a Bool
+
+
+selectListWithDeleted :: ( HasEntityFieldDeleted a, PersistQueryMonad backend n m
+                         , IsPersistMonadOf backend n m a
+                         )
+                      => Bool
+                      -> [ Filter a ]
+                      -> [ SelectOpt a ]
+                      -> m [Entity a]
+selectListWithDeleted is_deleted filters opts =
+  selectList ((entityFieldDeleted ==. is_deleted) : filters) opts
+
+selectKeysListWithDeleted :: ( HasEntityFieldDeleted a, PersistQueryMonad backend n m
+                             , IsPersistMonadOf backend n m a
+                             )
+                          => Bool
+                          -> [ Filter a ]
+                          -> [ SelectOpt a ]
+                          -> m [Key a]
+selectKeysListWithDeleted is_deleted filters opts =
+  selectKeysList ((entityFieldDeleted ==. is_deleted) : filters) opts
+
+
 -- vim: set foldmethod=marker:
