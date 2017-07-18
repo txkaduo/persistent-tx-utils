@@ -553,6 +553,10 @@ instance PersistField PersistJson where
 
   fromPersistValue x = Left $ "PersistJson must be converted from PersistDbSpecific, but got " <> tshow x
 
+instance ToJSON PersistJson where toJSON = unPersistJson
+
+instance FromJSON PersistJson where parseJSON = return . PersistJson
+
 
 toPersistJson :: ToJSON a => a -> PersistJson
 toPersistJson = PersistJson . toJSON
