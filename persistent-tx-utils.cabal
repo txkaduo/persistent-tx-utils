@@ -65,4 +65,6 @@ library
   else
       ghc-options:   -O2
 
-  ghc-options: -Wall -fwarn-tabs -fno-warn-partial-type-signatures +RTS -A128m -n2m -RTS
+  ghc-options: -Wall -fwarn-tabs -fno-warn-partial-type-signatures
+  if flag(dev)
+      ghc-options: +RTS -A128m -n2m -RTS
