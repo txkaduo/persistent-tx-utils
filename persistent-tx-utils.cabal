@@ -18,6 +18,7 @@ Flag dev
 library
   hs-source-dirs:      .
   exposed-modules:     Database.Persist.TX.Utils
+                       Database.Persist.TX.Utils.Orphans
                        Database.Persist.TX.Utils.Postgres
 
   build-depends:       base >= 4.7 && < 5
