@@ -18,6 +18,7 @@ Flag dev
 library
   hs-source-dirs:      .
   exposed-modules:     Database.Persist.TX.Utils
+                       Database.Persist.TX.Utils.Esqueleto
                        Database.Persist.TX.Utils.Dummy
                        Database.Persist.TX.Utils.Orphans
                        Database.Persist.TX.Utils.Postgres
@@ -28,6 +29,7 @@ library
                      , containers
                      , text
                      , time
+                     , esqueleto
                      , persistent
                      , persistent-template
                      , mtl
