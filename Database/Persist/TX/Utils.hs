@@ -132,15 +132,25 @@ type PersistStoreMonad backend n m =
 #endif
 
 -- | try to insert a new record, replace existing one if unique constaint conflicts.
+insertOrReplace' :: ( PersistQueryUniqueMonad backend n m
+                    , IsPersistMonadOf backend n m val
+                    )
+                 => val
+                 -> m (Either (Key val) (Key val))
+                 -- ^ Left: the old key; Right: the new key
+insertOrReplace' v = insertBy v
+                        >>= either
+                                (\(Entity k _) -> replace k v >> return (Left k))
+                                (return . Right)
+
+
 insertOrReplace :: ( PersistQueryUniqueMonad backend n m
                     , IsPersistMonadOf backend n m val
-                    ) =>
-                    val
-                    -> m (Key val)
-insertOrReplace v = insertBy v
-                        >>= either
-                                (\(Entity k _) -> replace k v >> return k)
-                                return
+                    )
+                 => val
+                 -> m (Key val)
+insertOrReplace = fmap (either id id) . insertOrReplace'
+
 
 -- | select current records, replace them with the supplied new list.
 -- Try hard to retain old records that are the same as new ones.
