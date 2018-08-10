@@ -1,5 +1,5 @@
 name:                persistent-tx-utils
-version:             0.1.5.0
+version:             0.1.6.0
 synopsis:            Utilities for Datbase.Persist
 -- description:
 license:             BSD3
