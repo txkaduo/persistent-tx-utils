@@ -633,4 +633,20 @@ selectKeysListWithDeleted is_deleted filters opts =
   selectKeysList ((entityFieldDeleted ==. is_deleted) : filters) opts
 
 
+-- | insert record, retry when new record when insertUniqueEntity failed.
+insertUniqueEntityRetry :: ( PersistUniqueMonad backend n m
+                           , IsPersistMonadOf backend n m a
+                           )
+                        => (a -> m (Maybe a))
+                        -> a
+                        -> m (Maybe (Entity a))
+insertUniqueEntityRetry mk_new rec0 = loop rec0
+  where
+    loop rec = do
+      m_ent <- insertUniqueEntity rec
+      case m_ent of
+        Just x -> return $ Just x
+        Nothing -> mk_new rec >>= fmap join . mapM loop
+
+
 -- vim: set foldmethod=marker:
