@@ -578,6 +578,41 @@ fromPersistJson (PersistJson v) = case A.fromJSON v of
                                     A.Success x -> Right x
 
 
+-- | Store data as native 'jsonb' data type of postgresql
+newtype PersistJsonb = PersistJsonb { unPersistJsonb :: Value }
+  deriving (Show, Eq)
+
+instance PersistFieldSql PersistJsonb where
+  sqlType _ = SqlOther "JSONB"
+
+instance PersistField PersistJsonb where
+  toPersistValue = PersistDbSpecific . toStrict . A.encode . unPersistJsonb
+
+  fromPersistValue (PersistDbSpecific bs) = case A.eitherDecode' $ fromStrict bs of
+                                              Left err -> Left $ fromString err
+                                              Right x  -> Right $ PersistJsonb x
+
+  fromPersistValue (PersistByteString bs) = case A.eitherDecode' $ fromStrict bs of
+                                              Left err -> Left $ fromString err
+                                              Right x  -> Right $ PersistJsonb x
+
+  fromPersistValue x = Left $ "PersistJsonb must be converted from PersistDbSpecific, but got " <> tshow x
+
+instance ToJSON PersistJsonb where toJSON = unPersistJsonb
+
+instance FromJSON PersistJsonb where parseJSON = return . PersistJsonb
+
+
+toPersistJsonb :: ToJSON a => a -> PersistJsonb
+toPersistJsonb = PersistJsonb . toJSON
+
+
+fromPersistJsonb :: FromJSON a => PersistJsonb -> Either String a
+fromPersistJsonb (PersistJsonb v) = case A.fromJSON v of
+                                    A.Error err -> Left err
+                                    A.Success x -> Right x
+
+
 findByEntityKey :: (Element seq ~ Entity record, SemiSequence seq, Eq (Key record))
                 => Key record
                 -> seq

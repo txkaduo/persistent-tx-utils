@@ -5,6 +5,8 @@ import           ClassyPrelude                   hiding (delete)
 import qualified Database.Esqueleto              as E
 import qualified Database.Esqueleto.Internal.Sql as E
 import           Database.Persist.TX.Utils       (unsafeEscapeForSqlLikeT)
+
+import Database.Persist.TX.Utils
 -- }}}1
 
 
@@ -38,5 +40,117 @@ esqMySqliLike :: E.SqlString a
               -> E.SqlExpr (E.Value a)
               -> E.SqlExpr (E.Value Bool)
 esqMySqliLike = E.unsafeSqlBinOp "LIKE BINARY"
+
+
+esqJsonbContains :: E.SqlExpr (E.Value PersistJsonb)
+                 -> E.SqlExpr (E.Value PersistJsonb)
+                 -> E.SqlExpr (E.Value Bool)
+esqJsonbContains = E.unsafeSqlBinOp "@>"
+
+
+esqJsonbAtInt :: Integral i
+              => E.SqlExpr (E.Value PersistJsonb)
+              -> E.SqlExpr (E.Value i)
+              -> E.SqlExpr (E.Value (Maybe PersistJsonb))
+esqJsonbAtInt = E.unsafeSqlBinOp "->"
+
+
+esqJsonbAtIntMaybe :: Integral i
+                   => E.SqlExpr (E.Value (Maybe PersistJsonb))
+                   -> E.SqlExpr (E.Value i)
+                   -> E.SqlExpr (E.Value (Maybe PersistJsonb))
+esqJsonbAtIntMaybe = E.unsafeSqlBinOp "->"
+
+
+esqJsonAtInt :: Integral i
+             => E.SqlExpr (E.Value PersistJson)
+             -> E.SqlExpr (E.Value i)
+             -> E.SqlExpr (E.Value (Maybe PersistJson))
+esqJsonAtInt = E.unsafeSqlBinOp "->"
+
+
+esqJsonAtIntMaybe :: Integral i
+                  => E.SqlExpr (E.Value (Maybe PersistJson))
+                  -> E.SqlExpr (E.Value i)
+                  -> E.SqlExpr (E.Value (Maybe PersistJson))
+esqJsonAtIntMaybe = E.unsafeSqlBinOp "->"
+
+
+esqJsonbAtKey :: E.SqlExpr (E.Value PersistJsonb)
+              -> E.SqlExpr (E.Value Text)
+              -> E.SqlExpr (E.Value (Maybe PersistJsonb))
+esqJsonbAtKey = E.unsafeSqlBinOp "->"
+
+
+esqJsonbAtKeyMaybe :: E.SqlExpr (E.Value (Maybe PersistJsonb))
+                   -> E.SqlExpr (E.Value Text)
+                   -> E.SqlExpr (E.Value (Maybe PersistJsonb))
+esqJsonbAtKeyMaybe = E.unsafeSqlBinOp "->"
+
+
+esqJsonAtKey :: E.SqlExpr (E.Value PersistJson)
+             -> E.SqlExpr (E.Value Text)
+             -> E.SqlExpr (E.Value (Maybe PersistJson))
+esqJsonAtKey = E.unsafeSqlBinOp "->"
+
+
+esqJsonAtKeyMaybe :: E.SqlExpr (E.Value (Maybe PersistJson))
+                  -> E.SqlExpr (E.Value Text)
+                  -> E.SqlExpr (E.Value (Maybe PersistJson))
+esqJsonAtKeyMaybe = E.unsafeSqlBinOp "->"
+
+
+esqJsonbAtIntText :: Integral i
+                  => E.SqlExpr (E.Value PersistJsonb)
+                  -> E.SqlExpr (E.Value i)
+                  -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonbAtIntText = E.unsafeSqlBinOp "->>"
+
+
+esqJsonbAtIntTextMaybe :: Integral i
+                       => E.SqlExpr (E.Value (Maybe PersistJsonb))
+                       -> E.SqlExpr (E.Value i)
+                       -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonbAtIntTextMaybe = E.unsafeSqlBinOp "->>"
+
+
+esqJsonAtIntText :: Integral i
+                 => E.SqlExpr (E.Value PersistJson)
+                 -> E.SqlExpr (E.Value i)
+                 -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonAtIntText = E.unsafeSqlBinOp "->>"
+
+
+esqJsonAtIntTextMaybe :: Integral i
+                      => E.SqlExpr (E.Value (Maybe PersistJson))
+                      -> E.SqlExpr (E.Value i)
+                      -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonAtIntTextMaybe = E.unsafeSqlBinOp "->>"
+
+
+esqJsonbAtKeyText :: E.SqlExpr (E.Value PersistJsonb)
+                  -> E.SqlExpr (E.Value Text)
+                  -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonbAtKeyText = E.unsafeSqlBinOp "->>"
+
+
+esqJsonbAtKeyTextMaybe :: E.SqlExpr (E.Value (Maybe PersistJsonb))
+                       -> E.SqlExpr (E.Value Text)
+                       -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonbAtKeyTextMaybe = E.unsafeSqlBinOp "->>"
+
+
+esqJsonAtKeyText :: E.SqlExpr (E.Value PersistJson)
+                 -> E.SqlExpr (E.Value Text)
+                 -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonAtKeyText = E.unsafeSqlBinOp "->>"
+
+
+esqJsonAtKeyTextMaybe :: E.SqlExpr (E.Value (Maybe PersistJson))
+                      -> E.SqlExpr (E.Value Text)
+                      -> E.SqlExpr (E.Value (Maybe Text))
+esqJsonAtKeyTextMaybe = E.unsafeSqlBinOp "->>"
+
+
 
 -- vim: set foldmethod=marker:
