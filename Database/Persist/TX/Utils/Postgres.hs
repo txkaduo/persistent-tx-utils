@@ -8,6 +8,7 @@ import           Data.Proxy
 import           Database.Persist
 import           Database.Persist.Sql
 import           Control.Monad.Trans.Maybe
+import qualified Database.PostgreSQL.Simple as PGS
 -- }}}1
 
 
@@ -214,3 +215,6 @@ pgSqlCreateIndexInfoByFieldsIfNotExist2 m_index_name opts field1 field2 = do
 -- }}}1
 
 
+pgSqlConnTxSetIsolationSerializable :: MonadIO m => PGS.Connection -> m ()
+pgSqlConnTxSetIsolationSerializable conn = liftIO $
+  void $ PGS.execute_ conn "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE"

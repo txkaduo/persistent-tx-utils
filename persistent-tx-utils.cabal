@@ -38,6 +38,7 @@ library
                      , deepseq
                      , aeson
                      , conduit
+                     , postgresql-simple
 
   default-language:    Haskell2010
 
