@@ -669,6 +669,7 @@ selectKeysListWithDeleted is_deleted filters opts =
 
 
 -- | insert record, retry when new record when insertUniqueEntity failed.
+-- CAUTION: 若 a 包含多个 Unique a, 可能有死循环．请用 checkUniqueInsertRetry
 insertUniqueEntityRetry :: ( PersistUniqueMonad backend n m
                            , IsPersistMonadOf backend n m a
                            )
@@ -682,6 +683,26 @@ insertUniqueEntityRetry mk_new rec0 = loop rec0
       case m_ent of
         Just x -> return $ Just x
         Nothing -> mk_new rec >>= fmap join . mapM loop
+
+
+-- | 效果类似于 insertUniqueEntityRetry，不过能处理有多个unique存在的情况
+checkUniqueInsertRetry :: ( PersistUniqueMonad backend n m
+                          , IsPersistMonadOf backend n m a
+                          , Eq (Unique a)
+                          )
+                       => (a -> Unique a)
+                       -> (a -> m (Maybe a))
+                       -> a
+                       -> m (Either (Unique a) (Maybe (Entity a)))
+checkUniqueInsertRetry get_unique mk_new rec0 = loop rec0
+  where
+    loop rec = do
+      m_unique <- checkUnique rec
+      case m_unique of
+        Nothing -> fmap (Right . Just) $ insertEntity rec
+        Just u -> if u == get_unique rec
+                     then mk_new rec >>= fmap (fromMaybe $ Right Nothing) . mapM loop
+                     else return $ Left u
 
 
 -- vim: set foldmethod=marker:
