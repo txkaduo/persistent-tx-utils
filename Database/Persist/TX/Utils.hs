@@ -20,6 +20,8 @@ import qualified Data.List                  as L
 
 import Control.Monad.State.Strict           (StateT)
 import qualified Control.Monad.State.Strict as S
+
+import Language.Haskell.TH
 -- }}}1
 
 
@@ -646,6 +648,16 @@ attachEntityKey' h g rec_id = fmap (fmap (h rec_id)) $ g rec_id
 class PersistEntity a => HasEntityFieldDeleted a where
   entityFieldDeleted :: EntityField a Bool
 
+deriveHasEntityFieldDeleted :: Name -> DecsQ
+deriveHasEntityFieldDeleted n = do
+  let deleted_field = mkName $ nameBase n <> "Deleted"
+  return
+    [ InstanceD Nothing [] (ConT ''HasEntityFieldDeleted `AppT` ConT n)
+      [ FunD 'entityFieldDeleted
+        [ Clause [] (NormalB $ ConE deleted_field) []
+        ]
+      ]
+    ]
 
 selectListWithDeleted :: ( HasEntityFieldDeleted a, PersistQueryMonad backend n m
                          , IsPersistMonadOf backend n m a
