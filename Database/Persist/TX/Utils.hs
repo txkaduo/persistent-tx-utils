@@ -25,9 +25,23 @@ import Language.Haskell.TH
 -- }}}1
 
 
+type DBMonadBase m = (MonadBaseControl IO m, MonadIO m)
+
 class DBActionRunner a where
+    -- | This should be a monad transformer
     type DBAction a :: (* -> *) -> * -> *
-    runDBWith :: (MonadBaseControl IO m, MonadIO m) => a -> DBAction a m r -> m r
+    runDBWith :: DBMonadBase m => a -> DBAction a m r -> m r
+
+
+-- | Example: SomeDBActionRunner SqlPersistT
+data SomeDBActionRunner t = forall a. (DBActionRunner a, DBAction a ~ t)
+                            => SomeDBActionRunner a
+
+runDBWith' :: DBMonadBase m
+           => SomeDBActionRunner t
+           -> t m r
+           -> m r
+runDBWith' (SomeDBActionRunner x) = runDBWith x
 
 
 -- | A little "generalized" version of 'liftPersist'
