@@ -547,6 +547,7 @@ unsafeRemoveEscapeForSqlLike = removeEscape unsafeSpecialsForSqlLike '\\'
 unsafeRemoveEscapeForSqlLikeT :: Text -> Text
 unsafeRemoveEscapeForSqlLikeT = pack . unsafeRemoveEscapeForSqlLike . unpack
 
+
 contains :: EntityField v Text -> Text -> Filter v
 contains = contains2 id
 
@@ -556,6 +557,21 @@ contains2 :: (PersistField a) =>
 contains2 conv field val = Filter field
                         (Left $ conv $ mconcat ["%", unsafeEscapeForSqlLikeT val, "%"])
                         (BackendSpecificFilter " LIKE ")
+
+
+-- | 包含并忽略大小写
+containsI :: EntityField v Text -> Text -> Filter v
+containsI = containsI2 id
+
+-- | 包含并忽略大小写
+containsI2 :: (PersistField a)
+           => (Text -> a)
+           -> EntityField v a
+           -> Text
+           -> Filter v
+containsI2 conv field val = Filter field
+                        (Left $ conv $ mconcat ["%", unsafeEscapeForSqlLikeT val, "%"])
+                        (BackendSpecificFilter " ILIKE ")
 
 
 -- | Store data as native 'json' data type of DB engine
