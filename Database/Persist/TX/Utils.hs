@@ -25,7 +25,12 @@ import Language.Haskell.TH
 -- }}}1
 
 
-type DBMonadBase m = (MonadBaseControl IO m, MonadIO m)
+#if MIN_VERSION_persistent(2, 8, 0)
+type DBMonadBase m = (MonadUnliftIO m)
+#else
+type DBMonadBase m = (MonadBaseControl IO m)
+#endif
+
 
 class DBActionRunner a where
     -- | This should be a monad transformer
@@ -493,7 +498,12 @@ escEntityDBName :: (PersistEntity a, Monad m) =>
 escEntityDBName conn = connEscapeName conn . entityDB . entityDef
 
 
-sinkEntityAsMap :: (Monad m, Ord (Key a)) => Sink (Entity a) m (Map (Key a) a)
+sinkEntityAsMap :: (Monad m, Ord (Key a))
+#if MIN_VERSION_conduit(1, 3, 0)
+                => ConduitT (Entity a) Void m (Map (Key a) a)
+#else
+                => Sink (Entity a) m (Map (Key a) a)
+#endif
 sinkEntityAsMap = go mempty
     where
         go s = do
