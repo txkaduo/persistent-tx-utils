@@ -42,6 +42,8 @@ library
                      , template-haskell
                      , monad-control
                      , bytestring
+                     , uuid
+                     , path-pieces
 
   default-language:    Haskell2010
 
