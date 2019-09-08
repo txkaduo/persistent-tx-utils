@@ -2,11 +2,13 @@ module Database.Persist.TX.Utils.Esqueleto where
 
 -- {{{1
 import           ClassyPrelude                   hiding (delete)
+import           Control.Exception (throw)
 import qualified Data.List.NonEmpty as LNE
 import           Database.Persist
 import qualified Database.Esqueleto              as E
 import qualified Database.Esqueleto.Internal.Sql as E
 import           Database.Persist.TX.Utils       (unsafeEscapeForSqlLikeT)
+import qualified Data.Text.Lazy.Builder          as TLB
 
 import Database.Persist.TX.Utils
 -- }}}1
@@ -38,8 +40,52 @@ esqPgSqlRow4 :: E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value b) -> E.SqlExpr (E.V
 esqPgSqlRow4 x1 x2 x3 x4 = E.unsafeSqlFunction "" (x1, x2, x3, x4)
 
 
-esqPgSqlArrayOverlap :: E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value [b]) -> E.SqlExpr (E.Value Bool)
+-- | ARRAY[?, ?, ?]
+#if MIN_VERSION_esqueleto(3, 0, 0)
+esqPgSqlArrayVal :: PersistField a => [a] -> E.SqlExpr (E.Value [a])
+esqPgSqlArrayVal vals = E.ERaw E.Never $ const $
+  ("ARRAY[" <> uncommas ("?" <$ vals) <> "]", map toPersistValue vals)
+#else
+-- This should be: esqPgSqlArrayVal :: PersistField a => [a] -> E.SqlExpr (E.Value [a])
+-- But don't know how to implement it for all PersistField types
+esqPgSqlArrayVal :: ToBackendKey SqlBackend a => [Key a] -> E.SqlExpr (E.Value [Key a])
+esqPgSqlArrayVal xs = E.unsafeSqlValue $ TLB.fromText "ARRAY[" <> args <> "]"
+  where args = TLB.fromText $ intercalate ", " $ map (tshow . fromSqlKey) xs
+#endif
+
+
+#if MIN_VERSION_esqueleto(3, 0, 0)
+esqPgSqlArray :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.Value [a])
+esqPgSqlArray args =
+  E.ERaw E.Never $ \info ->
+    let (argsTLB, argsVals) =
+          uncommas' $ map (\(E.ERaw _ f) -> f info) $ E.toArgList args
+    in ("ARRAY[" <> argsTLB <> "]", argsVals)
+
+
+-- | CAST (expression AS type)
+esqUnsafeCastAs :: Text -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value b)
+esqUnsafeCastAs t (E.ERaw p f) = E.ERaw E.Never $
+                                \ info -> let (b, vals) = f info
+                                           in ("CAST (" <> parensM p b <> " AS " <> TLB.fromText t <> ")", vals)
+esqUnsafeCastAs _ (E.ECompositeKey _) = throw (userError "cannot 'cast as' on ECompositeKey")
+
+#endif
+
+
+esqPgSqlArrayOverlap :: E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value Bool)
 esqPgSqlArrayOverlap = E.unsafeSqlBinOp "&&"
+
+esqPgSqlArrayOverlapMay :: E.SqlExpr (E.Value (Maybe [a])) -> E.SqlExpr (E.Value (Maybe [a])) -> E.SqlExpr (E.Value Bool)
+esqPgSqlArrayOverlapMay = E.unsafeSqlBinOp "&&"
+
+
+esqPgSqlArrayAny :: E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value a)
+esqPgSqlArrayAny = E.unsafeSqlFunction "ANY"
+
+
+esqPgSqlArrayAnyMay :: E.SqlExpr (E.Value (Maybe [a])) -> E.SqlExpr (E.Value (Maybe a))
+esqPgSqlArrayAnyMay = E.unsafeSqlFunction "ANY"
 
 
 esqOr :: LNE.NonEmpty (E.SqlExpr (E.Value Bool)) -> E.SqlExpr (E.Value Bool)
@@ -192,6 +238,23 @@ esqJsonAtKeyTextMaybe :: E.SqlExpr (E.Value (Maybe PersistJson))
                       -> E.SqlExpr (E.Value (Maybe Text))
 esqJsonAtKeyTextMaybe = E.unsafeSqlBinOp "->>"
 
+
+-- Some code copied from Esqueleto
+uncommas :: [TLB.Builder] -> TLB.Builder
+uncommas = intersperseB ", "
+
+intersperseB :: TLB.Builder -> [TLB.Builder] -> TLB.Builder
+intersperseB a = mconcat . intersperse a . filter (/= mempty)
+
+uncommas' :: Monoid a => [(TLB.Builder, a)] -> (TLB.Builder, a)
+uncommas' = (uncommas *** mconcat) . unzip
+
+parens :: TLB.Builder -> TLB.Builder
+parens b = "(" <> (b <> ")")
+
+parensM :: E.NeedParens -> TLB.Builder -> TLB.Builder
+parensM E.Never  = id
+parensM E.Parens = parens
 
 
 -- vim: set foldmethod=marker:
