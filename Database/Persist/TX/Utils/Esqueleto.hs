@@ -70,6 +70,13 @@ esqUnsafeCastAs t (E.ERaw p f) = E.ERaw E.Never $
                                            in ("CAST (" <> parensM p b <> " AS " <> TLB.fromText t <> ")", vals)
 esqUnsafeCastAs _ (E.ECompositeKey _) = throw (userError "cannot 'cast as' on ECompositeKey")
 
+esqList :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.ValueList a)
+esqList [] = E.EEmptyList
+esqList args =
+  E.EList $ E.ERaw E.Never $ \info ->
+    let (argsTLB, argsVals) =
+          uncommas' $ map (\(E.ERaw _ f) -> f info) $ E.toArgList args
+    in ("(" <> argsTLB <> ")", argsVals)
 #endif
 
 
