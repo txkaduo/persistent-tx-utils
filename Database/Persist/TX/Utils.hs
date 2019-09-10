@@ -666,6 +666,7 @@ instance PersistFieldSql PersistDiffTime where
 instance PersistField PersistDiffTime where
   toPersistValue = PersistDbSpecific . toStrict . toLazyByteString . nominalDiffTimeToBuilder . unPersistDiffTime
   fromPersistValue (PersistDbSpecific bs) = Left $ "TBD: " <> decodeUtf8 bs -- TODO: decode interval from different styles output
+  fromPersistValue x = Left $ "PersistDiffTime must be converted from PersistDbSpecific, but got " <> tshow x
 
 findByEntityKey :: (Element seq ~ Entity record, SemiSequence seq, Eq (Key record))
                 => Key record
