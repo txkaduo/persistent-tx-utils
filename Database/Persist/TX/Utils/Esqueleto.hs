@@ -29,7 +29,23 @@ type EsqCondOfEntity2 a b = EsqCondOf2 (Entity a) (Entity b)
 type EsqCondOfMaybeEntity a = EsqCondOf (Maybe (Entity a))
 
 
--- | Construct a ROW
+esqUnValue2 :: (E.Value a, E.Value b) -> (a, b)
+esqUnValue2 = E.unValue *** E.unValue
+
+
+esqUnValue3 :: (E.Value a, E.Value b, E.Value c) -> (a, b, c)
+esqUnValue3 (E.Value a, E.Value b, E.Value c) = (a, b, c)
+
+
+esqUnValue4 :: (E.Value a, E.Value b, E.Value c, E.Value d) -> (a, b, c, d)
+esqUnValue4 (E.Value a, E.Value b, E.Value c, E.Value d) = (a, b, c, d)
+
+
+esqUnValue5 :: (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) -> (a, b, c, d, e)
+esqUnValue5 (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) = (a, b, c, d, e)
+
+
+-- | Construct a ROW in PostgreSQL
 esqPgSqlRow2 :: E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value b) -> E.SqlExpr (E.Value (a, b))
 esqPgSqlRow2 x1 x2 = E.unsafeSqlFunction "" (x1, x2)
 
