@@ -4,8 +4,11 @@ module Database.Persist.TX.Utils where
 import ClassyPrelude                        hiding (delete)
 import Control.DeepSeq                      (NFData(..), deepseq)
 import Data.Aeson                           (Value, ToJSON(..), FromJSON(..))
+import Data.ByteString.Builder              (toLazyByteString)
 import Data.Conduit
+import Data.Time
 import Database.Persist
+import Database.PostgreSQL.Simple.Time
 
 #if MIN_VERSION_persistent(2, 0, 0)
 #else
@@ -654,6 +657,15 @@ fromPersistJsonb (PersistJsonb v) = case A.fromJSON v of
                                     A.Error err -> Left err
                                     A.Success x -> Right x
 
+newtype PersistDiffTime = PersistDiffTime { unPersistDiffTime :: NominalDiffTime }
+  deriving (Show, Eq, Num)
+
+instance PersistFieldSql PersistDiffTime where
+  sqlType _ = SqlOther "INTERVAL"
+
+instance PersistField PersistDiffTime where
+  toPersistValue = PersistDbSpecific . toStrict . toLazyByteString . nominalDiffTimeToBuilder . unPersistDiffTime
+  fromPersistValue (PersistDbSpecific bs) = Left $ "TBD: " <> decodeUtf8 bs -- TODO: decode interval from different styles output
 
 findByEntityKey :: (Element seq ~ Entity record, SemiSequence seq, Eq (Key record))
                 => Key record
