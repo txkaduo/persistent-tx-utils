@@ -97,10 +97,10 @@ esqList args =
 
 
 esqPgSqlArrayOverlap :: E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value Bool)
-esqPgSqlArrayOverlap = E.unsafeSqlBinOp "&&"
+esqPgSqlArrayOverlap = E.unsafeSqlBinOp " && "
 
 esqPgSqlArrayOverlapMay :: E.SqlExpr (E.Value (Maybe [a])) -> E.SqlExpr (E.Value (Maybe [a])) -> E.SqlExpr (E.Value Bool)
-esqPgSqlArrayOverlapMay = E.unsafeSqlBinOp "&&"
+esqPgSqlArrayOverlapMay = E.unsafeSqlBinOp " && "
 
 
 esqPgSqlArrayAny :: E.SqlExpr (E.Value [a]) -> E.SqlExpr (E.Value a)
