@@ -45,6 +45,13 @@ esqUnValue5 :: (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) -> (a, b,
 esqUnValue5 (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) = (a, b, c, d, e)
 
 
+esqPgSqlUTCTimeToDayMaybe :: E.SqlExpr (E.Value (Maybe UTCTime)) -> E.SqlExpr (E.Value (Maybe Day))
+esqPgSqlUTCTimeToDayMaybe = E.unsafeSqlFunction "DATE"
+
+esqPgSqlUTCTimeToDay :: E.SqlExpr (E.Value UTCTime) -> E.SqlExpr (E.Value Day)
+esqPgSqlUTCTimeToDay = E.unsafeSqlFunction "DATE"
+
+
 -- | Construct a ROW in PostgreSQL
 esqPgSqlRow2 :: E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value b) -> E.SqlExpr (E.Value (a, b))
 esqPgSqlRow2 x1 x2 = E.unsafeSqlFunction "" (x1, x2)
