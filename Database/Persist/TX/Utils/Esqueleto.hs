@@ -9,6 +9,8 @@ import qualified Database.Esqueleto              as E
 import qualified Database.Esqueleto.Internal.Sql as E
 import           Database.Persist.TX.Utils       (unsafeEscapeForSqlLikeT)
 import qualified Data.Text.Lazy.Builder          as TLB
+import           Database.Esqueleto.Internal.Sql (veryUnsafeCoerceSqlExprValue)
+import           Database.PostgreSQL.Simple.Time (Unbounded(..))
 
 import Database.Persist.TX.Utils
 -- }}}1
@@ -50,6 +52,13 @@ esqPgSqlUTCTimeToDayMaybe = E.unsafeSqlFunction "DATE"
 
 esqPgSqlUTCTimeToDay :: E.SqlExpr (E.Value UTCTime) -> E.SqlExpr (E.Value Day)
 esqPgSqlUTCTimeToDay = E.unsafeSqlFunction "DATE"
+
+
+esqPgSqlDayToUnbounded :: E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value (Unbounded Day))
+esqPgSqlDayToUnbounded = veryUnsafeCoerceSqlExprValue
+
+esqPgSqlDayToUnboundedMaybe :: E.SqlExpr (E.Value (Maybe Day)) -> E.SqlExpr (E.Value (Maybe (Unbounded Day)))
+esqPgSqlDayToUnboundedMaybe = veryUnsafeCoerceSqlExprValue
 
 
 -- | Construct a ROW in PostgreSQL
