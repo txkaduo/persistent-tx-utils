@@ -158,6 +158,9 @@ type PersistStoreMonad backend n m =
 -- | try to insert a new record, replace existing one if unique constaint conflicts.
 insertOrReplace' :: ( PersistQueryUniqueMonad backend n m
                     , IsPersistMonadOf backend n m val
+#if MIN_VERSION_persistent(2, 10, 0)
+                    , AtLeastOneUniqueKey val
+#endif
                     )
                  => val
                  -> m (Either (Key val) (Key val))
@@ -170,6 +173,9 @@ insertOrReplace' v = insertBy v
 
 insertOrReplace :: ( PersistQueryUniqueMonad backend n m
                     , IsPersistMonadOf backend n m val
+#if MIN_VERSION_persistent(2, 10, 0)
+                    , AtLeastOneUniqueKey val
+#endif
                     )
                  => val
                  -> m (Key val)
@@ -182,6 +188,9 @@ insertOrUpdateWithList ::
     ( Eq val
     , PersistQueryUniqueMonad backend n m
     , IsPersistMonadOf backend n m val
+#if MIN_VERSION_persistent(2, 10, 0)
+    , AtLeastOneUniqueKey val
+#endif
     ) =>
     [Filter val]
     -> [val]                -- ^ new values
@@ -223,6 +232,9 @@ replaceWithList ::
     , PersistEntityBackend val ~ PersistMonadBackend m
     , PersistUnique m
     , PersistQuery m
+#endif
+#if MIN_VERSION_persistent(2, 10, 0)
+    , AtLeastOneUniqueKey val
 #endif
     ) =>
     [Filter val]
@@ -354,6 +366,10 @@ insertOrUpdate ::
 #else
     , PersistEntityBackend val ~ PersistMonadBackend m
     , PersistUnique m, PersistQuery m
+#endif
+
+#if MIN_VERSION_persistent(2, 10, 0)
+    , AtLeastOneUniqueKey val
 #endif
     ) =>
     val                 -- ^ new value to insert
@@ -568,8 +584,13 @@ contains2 :: (PersistField a) =>
     (Text -> a)
     -> EntityField v a -> Text -> Filter v
 contains2 conv field val = Filter field
-                        (Left $ conv $ mconcat ["%", unsafeEscapeForSqlLikeT val, "%"])
+#if MIN_VERSION_persistent(2, 10, 0)
+                        (FilterValue v)
+#else
+                        (Left v)
+#endif
                         (BackendSpecificFilter " LIKE ")
+  where v = conv $ mconcat ["%", unsafeEscapeForSqlLikeT val, "%"]
 
 
 -- | 包含并忽略大小写
@@ -583,8 +604,13 @@ containsI2 :: (PersistField a)
            -> Text
            -> Filter v
 containsI2 conv field val = Filter field
-                        (Left $ conv $ mconcat ["%", unsafeEscapeForSqlLikeT val, "%"])
+#if MIN_VERSION_persistent(2, 10, 0)
+                        (FilterValue v)
+#else
+                        (Left v)
+#endif
                         (BackendSpecificFilter " ILIKE ")
+  where v = conv $ mconcat ["%", unsafeEscapeForSqlLikeT val, "%"]
 
 
 -- | Store data as native 'json' data type of DB engine
