@@ -20,6 +20,8 @@ type EsqCondOf a = E.SqlExpr a -> E.SqlExpr (E.Value Bool)
 
 type EsqCondOf2 a b = E.SqlExpr a -> E.SqlExpr b -> E.SqlExpr (E.Value Bool)
 
+type EsqCondOf3 a b c = E.SqlExpr a -> E.SqlExpr b -> E.SqlExpr c -> E.SqlExpr (E.Value Bool)
+
 type EsqCondOfValue a = E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Bool)
 
 -- | 过滤某 Entity 表的函数
