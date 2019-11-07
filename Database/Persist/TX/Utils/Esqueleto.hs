@@ -49,11 +49,25 @@ esqUnValue5 :: (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) -> (a, b,
 esqUnValue5 (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) = (a, b, c, d, e)
 
 
-esqPgSqlUTCTimeToDayMaybe :: E.SqlExpr (E.Value (Maybe UTCTime)) -> E.SqlExpr (E.Value (Maybe Day))
-esqPgSqlUTCTimeToDayMaybe = E.unsafeSqlFunction "DATE"
+class EsqHasDayPart a
 
-esqPgSqlUTCTimeToDay :: E.SqlExpr (E.Value UTCTime) -> E.SqlExpr (E.Value Day)
-esqPgSqlUTCTimeToDay = E.unsafeSqlFunction "DATE"
+instance EsqHasDayPart UTCTime
+
+instance EsqHasDayPart Day
+
+
+esqPgSqlToDayMaybe :: EsqHasDayPart a => E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value (Maybe Day))
+esqPgSqlToDayMaybe = E.unsafeSqlFunction "DATE"
+
+esqPgSqlToDay :: EsqHasDayPart a => E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Day)
+esqPgSqlToDay = E.unsafeSqlFunction "DATE"
+
+
+esqPgSqlDatePartMaybe :: EsqHasDayPart a => Text -> E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value (Maybe Double))
+esqPgSqlDatePartMaybe x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val x1, x2)
+
+esqPgSqlDatePart :: EsqHasDayPart a => Text -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Double)
+esqPgSqlDatePart x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val x1, x2)
 
 
 esqPgSqlDayToUnbounded :: E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value (Unbounded Day))
