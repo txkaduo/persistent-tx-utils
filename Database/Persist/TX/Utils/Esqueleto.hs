@@ -33,6 +33,16 @@ type EsqCondOfEntity2 a b = EsqCondOf2 (Entity a) (Entity b)
 type EsqCondOfMaybeEntity a = EsqCondOf (Maybe (Entity a))
 
 
+esqValueAsInt :: E.SqlExpr (E.Value Int) -> E.SqlExpr (E.Value Int)
+esqValueAsInt = id
+
+esqValueAsInt64 :: E.SqlExpr (E.Value Int64) -> E.SqlExpr (E.Value Int64)
+esqValueAsInt64 = id
+
+esqValueAsDouble :: E.SqlExpr (E.Value Double) -> E.SqlExpr (E.Value Double)
+esqValueAsDouble = id
+
+
 esqUnValue2 :: (E.Value a, E.Value b) -> (a, b)
 esqUnValue2 = E.unValue *** E.unValue
 
