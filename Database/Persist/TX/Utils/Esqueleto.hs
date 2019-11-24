@@ -33,6 +33,9 @@ type EsqCondOfEntity2 a b = EsqCondOf2 (Entity a) (Entity b)
 type EsqCondOfMaybeEntity a = EsqCondOf (Maybe (Entity a))
 
 
+esqIsJust :: (PersistField a) => E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value Bool)
+esqIsJust = E.not_ . E.isNothing
+
 esqValueAsInt :: E.SqlExpr (E.Value Int) -> E.SqlExpr (E.Value Int)
 esqValueAsInt = id
 
