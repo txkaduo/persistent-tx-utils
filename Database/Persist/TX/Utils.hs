@@ -8,13 +8,8 @@ import Data.ByteString.Builder              (toLazyByteString)
 import Data.Conduit
 import Data.Time
 import Database.Persist
+import Database.Persist.Sql
 import Database.PostgreSQL.Simple.Time
-
-#if MIN_VERSION_persistent(2, 0, 0)
-#else
-import Database.Persist.Sql                 (MonadSqlPersist, Connection)
-#endif
-import Database.Persist.Sql                 (SqlBackend, transactionUndo, connEscapeName, PersistFieldSql(..))
 
 import Control.Monad.Except                 (ExceptT, MonadError(..))
 
@@ -26,6 +21,54 @@ import qualified Control.Monad.State.Strict as S
 
 import Language.Haskell.TH
 -- }}}1
+
+
+type SqlWriteSource m a = forall backend. SqlBackendCanWrite backend =>
+#if MIN_VERSION_conduit(1, 3, 0)
+  ConduitT () a (ReaderT backend m) ()
+#else
+  Source (ReaderT backend m) a
+#endif
+
+
+type SqlWriteConduit i m o = forall backend. SqlBackendCanWrite backend =>
+#if MIN_VERSION_conduit(1, 3, 0)
+  ConduitT i o (ReaderT backend m) ()
+#else
+  Conduit i (ReaderT backend m) o
+#endif
+
+
+type SqlWriteSink i m r = forall backend. SqlBackendCanWrite backend =>
+#if MIN_VERSION_conduit(1, 3, 0)
+  ConduitT i Void (ReaderT backend m) r
+#else
+  Sink i (ReaderT backend m) r
+#endif
+
+
+type SqlReadSource m a = forall backend. SqlBackendCanRead backend =>
+#if MIN_VERSION_conduit(1, 3, 0)
+  ConduitT () a (ReaderT backend m) ()
+#else
+  Source (ReaderT backend m) a
+#endif
+
+
+type SqlReadConduit i m o = forall backend. SqlBackendCanRead backend =>
+#if MIN_VERSION_conduit(1, 3, 0)
+  ConduitT i o (ReaderT backend m) ()
+#else
+  Conduit i (ReaderT backend m) o
+#endif
+
+
+type SqlReadSink i m r = forall backend. SqlBackendCanRead backend =>
+#if MIN_VERSION_conduit(1, 3, 0)
+  ConduitT i Void (ReaderT backend m) r
+#else
+  Sink i (ReaderT backend m) r
+#endif
 
 
 #if MIN_VERSION_persistent(2, 8, 0)
