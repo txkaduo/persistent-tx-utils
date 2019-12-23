@@ -324,10 +324,33 @@ parensM :: E.NeedParens -> TLB.Builder -> TLB.Builder
 parensM E.Never  = id
 parensM E.Parens = parens
 
-between :: E.PersistField typ
-        => E.SqlExpr (E.Value typ)
-        -> (E.SqlExpr (E.Value typ), E.SqlExpr (E.Value typ))
-        -> E.SqlExpr (E.Value Bool)
-between x (a, b) = x E.>=. a E.&&. x E.<. b
+
+esqBetweenOpen :: (Ord typ,  E.PersistField typ)
+               => E.SqlExpr (E.Value typ)
+               -> (E.SqlExpr (E.Value typ), E.SqlExpr (E.Value typ))
+               -> E.SqlExpr (E.Value Bool)
+esqBetweenOpen x (a, b) = x E.>. a E.&&. x E.<. b
+
+
+esqBetweenLeftOpen :: (Ord typ,  E.PersistField typ)
+                    => E.SqlExpr (E.Value typ)
+                    -> (E.SqlExpr (E.Value typ), E.SqlExpr (E.Value typ))
+                    -> E.SqlExpr (E.Value Bool)
+esqBetweenLeftOpen x (a, b) = x E.>. a E.&&. x E.<=. b
+
+
+esqBetweenRightOpen :: (Ord typ,  E.PersistField typ)
+                    => E.SqlExpr (E.Value typ)
+                    -> (E.SqlExpr (E.Value typ), E.SqlExpr (E.Value typ))
+                    -> E.SqlExpr (E.Value Bool)
+esqBetweenRightOpen x (a, b) = x E.>=. a E.&&. x E.<. b
+
+
+esqBetweenClose :: (Ord typ,  E.PersistField typ)
+                => E.SqlExpr (E.Value typ)
+                -> (E.SqlExpr (E.Value typ), E.SqlExpr (E.Value typ))
+                -> E.SqlExpr (E.Value Bool)
+esqBetweenClose x (a, b) = x E.>=. a E.&&. x E.<=. b
+
 
 -- vim: set foldmethod=marker:
