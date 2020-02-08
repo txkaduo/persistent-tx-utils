@@ -44,6 +44,7 @@ library
                      , bytestring
                      , uuid
                      , path-pieces
+                     , filepath
 
   default-language:    Haskell2010
 
@@ -79,3 +80,53 @@ library
   ghc-options: -Wall -fwarn-tabs -fno-warn-partial-type-signatures
   if flag(dev)
       ghc-options: +RTS -A128m -n2m -RTS
+
+
+test-suite persistent-tx-utils-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+  main-is:             Spec.hs
+  build-depends:       base
+                     , classy-prelude
+                     , persistent-tx-utils
+                     , hspec
+                     , QuickCheck
+                     , filepath
+
+  other-modules:       Database.Persist.TX.UtilsSpec
+
+  default-language:    Haskell2010
+
+  default-extensions:
+              TemplateHaskell
+              QuasiQuotes
+              OverloadedStrings
+              NoImplicitPrelude
+              MultiParamTypeClasses
+              TypeFamilies
+              GADTs
+              GeneralizedNewtypeDeriving
+              FlexibleContexts
+              FlexibleInstances
+              EmptyDataDecls
+              NoMonomorphismRestriction
+              DeriveDataTypeable
+              ViewPatterns
+              TupleSections
+              RecordWildCards
+              RankNTypes
+              DeriveGeneric
+              PartialTypeSignatures
+              CPP
+              ConstraintKinds
+
+  if flag(dev)
+      cpp-options:   -DDEVELOPMENT
+      ghc-options:   -O0 -j
+  else
+      ghc-options:   -O2
+
+  ghc-options: -Wall -fwarn-tabs -fno-warn-partial-type-signatures
+  if flag(dev)
+      ghc-options: +RTS -A128m -n2m -RTS
+

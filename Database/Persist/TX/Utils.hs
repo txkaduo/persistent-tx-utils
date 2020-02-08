@@ -5,11 +5,14 @@ import ClassyPrelude                        hiding (delete)
 import Control.DeepSeq                      (NFData(..), deepseq)
 import Data.Aeson                           (Value, ToJSON(..), FromJSON(..))
 import Data.ByteString.Builder              (toLazyByteString)
+import Data.Char
 import Data.Conduit
+import Data.List (dropWhileEnd)
 import Data.Time
 import Database.Persist
 import Database.Persist.Sql
 import Database.PostgreSQL.Simple.Time
+import System.FilePath
 
 import Control.Monad.Except                 (ExceptT, MonadError(..))
 
@@ -837,6 +840,26 @@ checkUniqueInsertRetry get_unique mk_new rec0 = loop rec0
         Just u -> if u == get_unique rec
                      then mk_new rec >>= fmap (fromMaybe $ Right Nothing) . mapM loop
                      else return $ Left u
+
+
+-- | 常见的自动改文件名策略: 在旧文件名后加上 (n) 的字串，n根据前一个文件名中的数字增加一
+autoNameNumAscending :: FilePath -> FilePath
+autoNameNumAscending p = replaceBaseName p new_base_name
+  where base_name = takeBaseName p
+
+        (file_real_name, file_seq_num) = fromMaybe (base_name, 0) split_num_part
+        new_base_name = file_real_name <> "(" <> show (file_seq_num + 1) <> ")"
+
+        split_num_part :: Maybe (FilePath, Integer)
+        split_num_part = do
+          s1 <- stripSuffix ")" base_name
+          let s2 = dropWhileEnd isDigit s1
+          real_name <- stripSuffix "(" s2
+          guard $ not $ null real_name
+          num_part <- stripPrefix s2 s1
+          num <- readMay num_part
+          guard $ num > 0 && num < 9999
+          pure (real_name, num)
 
 
 -- vim: set foldmethod=marker:
