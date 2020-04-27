@@ -45,12 +45,20 @@ esqEqMaybe f (Just x) = f E.==. E.val (Just x)
 esqValueAsInt :: E.SqlExpr (E.Value Int) -> E.SqlExpr (E.Value Int)
 esqValueAsInt = id
 
+esqValueAsIntMaybe :: E.SqlExpr (E.Value (Maybe Int)) -> E.SqlExpr (E.Value (Maybe Int))
+esqValueAsIntMaybe = id
+
 esqValueAsInt64 :: E.SqlExpr (E.Value Int64) -> E.SqlExpr (E.Value Int64)
 esqValueAsInt64 = id
+
+esqValueAsInt64Maybe :: E.SqlExpr (E.Value (Maybe Int64)) -> E.SqlExpr (E.Value (Maybe Int64))
+esqValueAsInt64Maybe = id
 
 esqValueAsDouble :: E.SqlExpr (E.Value Double) -> E.SqlExpr (E.Value Double)
 esqValueAsDouble = id
 
+esqValueAsDoubleMaybe :: E.SqlExpr (E.Value (Maybe Double)) -> E.SqlExpr (E.Value (Maybe Double))
+esqValueAsDoubleMaybe = id
 
 esqUnValue2 :: (E.Value a, E.Value b) -> (a, b)
 esqUnValue2 = E.unValue *** E.unValue
