@@ -70,6 +70,8 @@ library
               PartialTypeSignatures
               CPP
               ConstraintKinds
+              DerivingStrategies
+              StandaloneDeriving
 
   if flag(dev)
       cpp-options:   -DDEVELOPMENT

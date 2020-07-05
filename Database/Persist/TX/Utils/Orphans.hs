@@ -11,6 +11,7 @@ import Database.Persist.Sql
 import Database.PostgreSQL.Simple.Time (Unbounded(..))
 
 
+#if !MIN_VERSION_persistent(2, 10, 5)
 instance (RawSql a, RawSql b, RawSql c,
           RawSql d, RawSql e, RawSql f,
           RawSql g, RawSql h, RawSql i)
@@ -24,7 +25,7 @@ from9 (a,b,c,d,e,f,g,h,i) = ((a,b),(c,d),(e,f),(g,h),i)
 
 to9 :: ((a,b),(c,d),(e,f),(g,h),i) -> (a,b,c,d,e,f,g,h,i)
 to9 ((a,b),(c,d),(e,f),(g,h),i) = (a,b,c,d,e,f,g,h,i)
-
+#endif
 
 instance PersistFieldSql UUID where
   sqlType _ = SqlOther "UUID"
