@@ -296,15 +296,14 @@ replaceWithList fts new_ones = do
 -- in wrapped function.
 undoTransWhenE ::
 #if MIN_VERSION_persistent(2, 0, 0)
-    (MonadIO m) =>
-    ExceptT e (ReaderT SqlBackend m) a
-    -> ExceptT e (ReaderT SqlBackend m) a
+    (MonadReader SqlBackend m, MonadIO m, MonadError e m) =>
+    m a -> m a
 #else
-    (MonadSqlPersist m) => ExceptT e m a -> ExceptT e m a
+    (MonadSqlPersist m, MonadError e m) => m a -> m a
 #endif
 undoTransWhenE f = catchError f h
     where
-        h err = lift transactionUndo >> throwError err
+        h err = liftPersist transactionUndo >> throwError err
 
 #if MIN_VERSION_persistent(2, 0, 0)
 undoTransWhenE2 :: (MonadIO m, MonadError e m) =>
