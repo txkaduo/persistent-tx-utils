@@ -143,6 +143,11 @@ esqUnsafeCastAs t (E.ERaw p f) = E.ERaw E.Never $
                                 \ info -> let (b, vals) = f info
                                            in ("CAST (" <> parensM p b <> " AS " <> TLB.fromText t <> ")", vals)
 esqUnsafeCastAs _ (E.ECompositeKey _) = throw (userError "cannot 'cast as' on ECompositeKey")
+#if MIN_VERSION_esqueleto(3, 3, 0)
+esqUnsafeCastAs _ (E.EAliasedValue _ _) = throw (userError "cannot 'cast as' on EAliasedValue")
+esqUnsafeCastAs _ (E.EValueReference _ _) = throw (userError "cannot 'cast as' on EValueReference")
+#endif
+
 
 esqList :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.ValueList a)
 esqList [] = E.EEmptyList
