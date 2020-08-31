@@ -32,6 +32,10 @@ type EsqCondOfEntity2 a b = EsqCondOf2 (Entity a) (Entity b)
 type EsqCondOfMaybeEntity a = EsqCondOf (Maybe (Entity a))
 
 
+esqUnsafeFromSqlKey :: E.SqlExpr (E.Value (Key ent)) -> E.SqlExpr (E.Value Int64)
+esqUnsafeFromSqlKey = E.veryUnsafeCoerceSqlExprValue
+
+
 esqIsJust :: (PersistField a) => E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value Bool)
 esqIsJust = E.not_ . E.isNothing
 
