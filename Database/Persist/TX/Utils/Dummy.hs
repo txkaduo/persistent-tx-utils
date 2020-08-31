@@ -1,7 +1,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Database.Persist.TX.Utils.Dummy where
 
-import           Prelude
+-- 2import           Prelude
 import           Database.Persist.Sql
 import           Database.Persist.TH
 

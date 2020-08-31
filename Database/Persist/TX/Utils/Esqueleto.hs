@@ -7,7 +7,6 @@ import qualified Data.List.NonEmpty as LNE
 import           Database.Persist
 import qualified Database.Esqueleto              as E
 import qualified Database.Esqueleto.Internal.Sql as E
-import           Database.Persist.TX.Utils       (unsafeEscapeForSqlLikeT)
 import qualified Data.Text.Lazy.Builder          as TLB
 import           Database.Esqueleto.Internal.Sql (veryUnsafeCoerceSqlExprValue)
 import           Database.PostgreSQL.Simple.Time (Unbounded(..))

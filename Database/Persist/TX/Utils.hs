@@ -2,7 +2,9 @@ module Database.Persist.TX.Utils where
 
 -- {{{1
 import ClassyPrelude                        hiding (delete)
+#if !MIN_VERSION_classy_prelude(1, 5, 0)
 import Control.DeepSeq                      (NFData(..), deepseq)
+#endif
 import Data.Aeson                           (Value, ToJSON(..), FromJSON(..))
 import Data.ByteString.Builder              (toLazyByteString)
 import Data.Char
