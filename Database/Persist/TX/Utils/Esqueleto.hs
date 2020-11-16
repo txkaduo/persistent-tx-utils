@@ -100,6 +100,19 @@ esqPgSqlDatePart :: EsqHasDayPart a => Text -> E.SqlExpr (E.Value a) -> E.SqlExp
 esqPgSqlDatePart x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val x1, x2)
 
 
+esqPgSqlDayAdd :: Integral a => E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Day)
+esqPgSqlDayAdd = E.unsafeSqlBinOp " + "
+
+esqPgSqlDayMaybeAdd :: Integral a => E.SqlExpr (E.Value (Maybe Day)) -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value (Maybe Day))
+esqPgSqlDayMaybeAdd = E.unsafeSqlBinOp " + "
+
+esqPgSqlDayMinus :: Integral a => E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Day)
+esqPgSqlDayMinus = E.unsafeSqlBinOp " - "
+
+esqPgSqlDayMaybeMinus :: Integral a => E.SqlExpr (E.Value (Maybe Day)) -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value (Maybe Day))
+esqPgSqlDayMaybeMinus = E.unsafeSqlBinOp " - "
+
+
 esqPgSqlDayToUnbounded :: E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value (Unbounded Day))
 esqPgSqlDayToUnbounded = veryUnsafeCoerceSqlExprValue
 
