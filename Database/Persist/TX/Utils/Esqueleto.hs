@@ -14,6 +14,9 @@ import           Database.PostgreSQL.Simple.Time (Unbounded(..))
 import Database.Persist.TX.Utils
 -- }}}1
 
+type EsqExprEntity a = E.SqlExpr (Entity a)
+
+type EsqExprMaybeEntity a = E.SqlExpr (Maybe (Entity a))
 
 type EsqCondOf a = E.SqlExpr a -> E.SqlExpr (E.Value Bool)
 
