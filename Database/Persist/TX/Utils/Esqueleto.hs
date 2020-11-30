@@ -81,6 +81,9 @@ esqUnValue4 (E.Value a, E.Value b, E.Value c, E.Value d) = (a, b, c, d)
 esqUnValue5 :: (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) -> (a, b, c, d, e)
 esqUnValue5 (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e) = (a, b, c, d, e)
 
+esqUnValue6 :: (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e, E.Value f) -> (a, b, c, d, e, f)
+esqUnValue6 (E.Value a, E.Value b, E.Value c, E.Value d, E.Value e, E.Value f) = (a, b, c, d, e, f)
+
 
 class EsqHasDayPart a
 
