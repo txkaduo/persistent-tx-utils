@@ -11,6 +11,8 @@ import qualified Data.Text.Lazy.Builder          as TLB
 import           Database.Esqueleto.Internal.Sql (veryUnsafeCoerceSqlExprValue)
 import           Database.PostgreSQL.Simple.Time (Unbounded(..))
 
+import           GHC.TypeLits
+
 import Database.Persist.TX.Utils
 -- }}}1
 
@@ -91,6 +93,11 @@ instance EsqHasDayPart UTCTime
 
 instance EsqHasDayPart Day
 
+type family DatePartResult (a :: Symbol) where
+  DatePartResult "week"  = Int
+  DatePartResult "month" = Int
+  DatePartResult "year"  = Int64  -- ^ cannot use Integer, because Integer is not a PersistField
+
 
 esqPgSqlToDayMaybe :: EsqHasDayPart a => E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value (Maybe Day))
 esqPgSqlToDayMaybe = E.unsafeSqlFunction "DATE"
@@ -99,11 +106,17 @@ esqPgSqlToDay :: EsqHasDayPart a => E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value 
 esqPgSqlToDay = E.unsafeSqlFunction "DATE"
 
 
-esqPgSqlDatePartMaybe :: EsqHasDayPart a => Text -> E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value (Maybe Double))
-esqPgSqlDatePartMaybe x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val x1, x2)
+esqPgSqlDatePartMaybe :: (EsqHasDayPart a, KnownSymbol s)
+                      => proxy s
+                      -> E.SqlExpr (E.Value (Maybe a))
+                      -> E.SqlExpr (E.Value (Maybe (DatePartResult s)))
+esqPgSqlDatePartMaybe x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val (symbolVal x1), x2)
 
-esqPgSqlDatePart :: EsqHasDayPart a => Text -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Double)
-esqPgSqlDatePart x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val x1, x2)
+esqPgSqlDatePart :: (EsqHasDayPart a, KnownSymbol s)
+                 => proxy s
+                 -> E.SqlExpr (E.Value a)
+                 -> E.SqlExpr (E.Value (DatePartResult s))
+esqPgSqlDatePart x1 x2 = E.unsafeSqlFunction "DATE_PART" (E.val (symbolVal x1), x2)
 
 
 esqPgSqlDayAdd :: Integral a => E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Day)

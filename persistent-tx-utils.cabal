@@ -72,6 +72,7 @@ library
               ConstraintKinds
               DerivingStrategies
               StandaloneDeriving
+              DataKinds
 
   if flag(dev)
       cpp-options:   -DDEVELOPMENT
