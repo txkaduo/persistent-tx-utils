@@ -16,17 +16,19 @@ import           GHC.TypeLits
 import Database.Persist.TX.Utils
 -- }}}1
 
+type EsqExprValue a = E.SqlExpr (E.Value a)
+
 type EsqExprEntity a = E.SqlExpr (Entity a)
 
 type EsqExprMaybeEntity a = E.SqlExpr (Maybe (Entity a))
 
-type EsqCondOf a = E.SqlExpr a -> E.SqlExpr (E.Value Bool)
+type EsqCondOf a = E.SqlExpr a -> EsqExprValue Bool
 
-type EsqCondOf2 a b = E.SqlExpr a -> E.SqlExpr b -> E.SqlExpr (E.Value Bool)
+type EsqCondOf2 a b = E.SqlExpr a -> E.SqlExpr b -> EsqExprValue Bool
 
-type EsqCondOf3 a b c = E.SqlExpr a -> E.SqlExpr b -> E.SqlExpr c -> E.SqlExpr (E.Value Bool)
+type EsqCondOf3 a b c = E.SqlExpr a -> E.SqlExpr b -> E.SqlExpr c -> EsqExprValue Bool
 
-type EsqCondOfValue a = E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value Bool)
+type EsqCondOfValue a = EsqExprValue a -> EsqExprValue Bool
 
 -- | 过滤某 Entity 表的函数
 type EsqCondOfEntity a = EsqCondOf (Entity a)
