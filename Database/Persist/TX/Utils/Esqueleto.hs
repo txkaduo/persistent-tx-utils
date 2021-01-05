@@ -7,6 +7,7 @@ import qualified Data.List.NonEmpty as LNE
 import           Database.Persist
 import qualified Database.Esqueleto              as E
 import qualified Database.Esqueleto.Internal.Sql as E
+import qualified Database.Esqueleto.Internal.Language as E
 import qualified Data.Text.Lazy.Builder          as TLB
 import           Database.Esqueleto.Internal.Sql (veryUnsafeCoerceSqlExprValue)
 import           Database.PostgreSQL.Simple.Time (Unbounded(..))
@@ -37,6 +38,10 @@ type EsqCondOfEntity2 a b = EsqCondOf2 (Entity a) (Entity b)
 
 -- | 过滤某 Entity 表的函数, Maybe 版
 type EsqCondOfMaybeEntity a = EsqCondOf (Maybe (Entity a))
+
+
+-- | 可以用作 E.from 第一个参数的类型条件
+type EsqCanSelectFrom a = (E.FromPreprocess a, E.From a)
 
 
 esqUnsafeFromSqlKey :: E.SqlExpr (E.Value (Key ent)) -> E.SqlExpr (E.Value Int64)
