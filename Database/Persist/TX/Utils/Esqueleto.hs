@@ -44,6 +44,12 @@ type EsqCondOfMaybeEntity a = EsqCondOf (Maybe (Entity a))
 type EsqCanSelectFrom a = (E.FromPreprocess a, E.From a)
 
 
+esqPagerQuery :: Int -> Int -> E.SqlQuery ()
+esqPagerQuery npp pn = do
+  E.offset $ fromIntegral $ (pn - 1) * npp
+  E.limit $ fromIntegral npp
+
+
 esqUnsafeFromSqlKey :: E.SqlExpr (E.Value (Key ent)) -> E.SqlExpr (E.Value Int64)
 esqUnsafeFromSqlKey = E.veryUnsafeCoerceSqlExprValue
 
@@ -224,6 +230,25 @@ esqOr (x LNE.:| xs) = foldr (E.||.) x xs
 esqAnd :: LNE.NonEmpty (E.SqlExpr (E.Value Bool)) -> E.SqlExpr (E.Value Bool)
 esqAnd (x LNE.:| xs) = foldr (E.&&.) x xs
 
+
+-- | 某种可以做SQL过滤条件的规则
+-- ts 通常是数据库表或其集合
+-- 各条件之间是 逻辑或 的关系
+newtype EsqLogicOr ts = EsqLogicOr ( LNE.NonEmpty ( ts -> EsqExprValue Bool ) )
+  deriving (Semigroup)
+
+runEsqLogicOr :: EsqLogicOr ts -> ts -> EsqExprValue Bool
+runEsqLogicOr (EsqLogicOr conds) ts = esqOr $ map ($ ts) conds
+
+
+-- | 某种可以做SQL过滤条件的规则
+-- ts 通常是数据库表或其集合
+-- 各条件之间是 逻辑或 的关系
+newtype EsqLogicAnd ts = EsqLogicAnd ( LNE.NonEmpty ( ts -> EsqExprValue Bool ) )
+  deriving (Semigroup)
+
+runEsqLogicAnd :: EsqLogicAnd ts -> ts -> EsqExprValue Bool
+runEsqLogicAnd (EsqLogicAnd conds) ts = esqAnd $ map ($ ts) conds
 
 
 esqPgSqlContainsI :: E.SqlExpr (E.Value Text) -> Text -> E.SqlExpr (E.Value Bool)
