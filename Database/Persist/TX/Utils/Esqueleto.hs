@@ -54,6 +54,10 @@ esqUnsafeFromSqlKey :: E.SqlExpr (E.Value (Key ent)) -> E.SqlExpr (E.Value Int64
 esqUnsafeFromSqlKey = E.veryUnsafeCoerceSqlExprValue
 
 
+esqUnsafeFromSqlKeyMaybe :: E.SqlExpr (E.Value (Maybe (Key ent))) -> E.SqlExpr (E.Value (Maybe Int64))
+esqUnsafeFromSqlKeyMaybe = E.veryUnsafeCoerceSqlExprValue
+
+
 esqIsJust :: (PersistField a) => E.SqlExpr (E.Value (Maybe a)) -> E.SqlExpr (E.Value Bool)
 esqIsJust = E.not_ . E.isNothing
 
