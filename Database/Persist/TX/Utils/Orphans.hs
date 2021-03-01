@@ -33,9 +33,14 @@ instance PersistFieldSql UUID where
 instance PersistField UUID where
   toPersistValue = PersistDbSpecific . U.toASCIIBytes
 
-  fromPersistValue (PersistDbSpecific bs) = maybe (Left "Invalid UUID text") Right $ U.fromASCIIBytes bs
   fromPersistValue (PersistByteString bs) = maybe (Left "Invalid UUID text") Right $ U.fromASCIIBytes bs
   fromPersistValue (PersistText t)        = maybe (Left "Invalid UUID text") Right $ U.fromText t
+#if MIN_VERSION_persistent(2, 9, 0)
+  fromPersistValue (PersistLiteralEscaped bs) = maybe (Left "Invalid UUID ByteString") Right $ U.fromASCIIBytes bs
+  fromPersistValue (PersistLiteral bs)        = maybe (Left "Invalid UUID ByteString") Right $ U.fromASCIIBytes bs
+#else
+  fromPersistValue (PersistDbSpecific bs)    = maybe (Left "Invalid UUID ByteString") Right $ U.fromASCIIBytes bs
+#endif
   fromPersistValue x                      = Left $ "PersistJson must be converted from PersistDbSpecific/PersistByteString/PersistText, but got " <> tshow x
 
 instance PathPiece UUID where
