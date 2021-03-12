@@ -75,12 +75,29 @@ pgSqlGetIndexInfoByFields fields = runMaybeT $ do
                   , toPersistValue indkey_str
                   ]
 
-  (Single (PersistDbSpecific idx_oid), Single is_unique, Single is_primary) <- MaybeT $ return $ listToMaybe rows
+  when (null rows) $ do
+    $logDebug $ "Table index does not exist: " <> indkey_str <> " on table " <> unDBName (tableDBName dummy_rec)
+
+#if MIN_VERSION_persistent(2, 9, 0)
+  (Single (PersistLiteralEscaped idx_oid), Single is_unique, Single is_primary)
+#else
+  (Single (PersistDbSpecific idx_oid), Single is_unique, Single is_primary)
+#endif
+      <- MaybeT $ return $ listToMaybe rows
 
   rows2 <- lift $ rawSql
                     "SELECT relname FROM pg_class WHERE oid = ?"
-                    [ toPersistValue (PersistDbSpecific idx_oid)
+                    [
+#if MIN_VERSION_persistent(2, 9, 0)
+                      toPersistValue (PersistLiteralEscaped idx_oid)
+#else
+                      toPersistValue (PersistDbSpecific idx_oid)
+#endif
                     ]
+
+  when (null rows) $ do
+    $logDebug $ "Oid of table index does not exist: " <> indkey_str <> " on table " <> unDBName (tableDBName dummy_rec)
+                <> ", oid=" <> decodeUtf8 idx_oid
 
   Single idx_name <- MaybeT $ return $ listToMaybe rows2
 
