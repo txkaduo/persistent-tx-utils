@@ -31,7 +31,11 @@ instance PersistFieldSql UUID where
   sqlType _ = SqlOther "UUID"
 
 instance PersistField UUID where
+#if MIN_VERSION_persistent(2, 9, 0)
+  toPersistValue = PersistLiteral . U.toASCIIBytes
+#else
   toPersistValue = PersistDbSpecific . U.toASCIIBytes
+#endif
 
   fromPersistValue (PersistByteString bs) = maybe (Left "Invalid UUID text") Right $ U.fromASCIIBytes bs
   fromPersistValue (PersistText t)        = maybe (Left "Invalid UUID text") Right $ U.fromText t
@@ -55,8 +59,15 @@ instance PersistField a => PersistField (Unbounded a) where
 
   fromPersistValue (PersistText "infinity")        = pure PosInfinity
   fromPersistValue (PersistText "-infinity")       = pure NegInfinity
+#if MIN_VERSION_persistent(2, 9, 0)
+  fromPersistValue (PersistLiteral "infinity")  = pure PosInfinity
+  fromPersistValue (PersistLiteral "-infinity") = pure NegInfinity
+  fromPersistValue (PersistLiteralEscaped "infinity")  = pure PosInfinity
+  fromPersistValue (PersistLiteralEscaped "-infinity") = pure NegInfinity
+#else
   fromPersistValue (PersistDbSpecific "infinity")  = pure PosInfinity
   fromPersistValue (PersistDbSpecific "-infinity") = pure NegInfinity
+#endif
   fromPersistValue (PersistByteString "infinity")  = pure PosInfinity
   fromPersistValue (PersistByteString "-infinity") = pure NegInfinity
   fromPersistValue x                               = fmap Finite $ fromPersistValue x
