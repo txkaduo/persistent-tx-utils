@@ -10,7 +10,7 @@ import qualified Database.Esqueleto.Internal.Sql as E
 import qualified Database.Esqueleto.Internal.Language as E
 import qualified Data.Text.Lazy.Builder          as TLB
 import           Database.Esqueleto.Internal.Sql (veryUnsafeCoerceSqlExprValue)
-import           Database.PostgreSQL.Simple.Time (Unbounded(..))
+import           Database.PostgreSQL.Simple.Time (Unbounded(..), Date)
 
 import           GHC.TypeLits
 
@@ -109,6 +109,8 @@ class EsqHasDayPart a
 instance EsqHasDayPart UTCTime
 
 instance EsqHasDayPart Day
+
+instance EsqHasDayPart Date
 
 type family DatePartResult (a :: Symbol) where
   DatePartResult "week"  = Int
