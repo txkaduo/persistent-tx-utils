@@ -4,12 +4,17 @@ module Database.Persist.TX.Utils.Esqueleto where
 import           ClassyPrelude                   hiding (delete)
 import           Control.Exception (throw)
 import qualified Data.List.NonEmpty as LNE
+import qualified Data.Text.Lazy.Builder          as TLB
 import           Database.Persist
 import qualified Database.Esqueleto              as E
+
+#if MIN_VERSION_esqueleto(3, 4, 0)
+import qualified Database.Esqueleto.Internal.Internal as E
+#else
 import qualified Database.Esqueleto.Internal.Sql as E
 import qualified Database.Esqueleto.Internal.Language as E
-import qualified Data.Text.Lazy.Builder          as TLB
-import           Database.Esqueleto.Internal.Sql (veryUnsafeCoerceSqlExprValue)
+#endif
+
 import           Database.PostgreSQL.Simple.Time (Unbounded(..), Date)
 
 import           GHC.TypeLits
@@ -152,10 +157,10 @@ esqPgSqlDayMaybeMinus = E.unsafeSqlBinOp " - "
 
 
 esqPgSqlDayToUnbounded :: E.SqlExpr (E.Value Day) -> E.SqlExpr (E.Value (Unbounded Day))
-esqPgSqlDayToUnbounded = veryUnsafeCoerceSqlExprValue
+esqPgSqlDayToUnbounded = E.veryUnsafeCoerceSqlExprValue
 
 esqPgSqlDayToUnboundedMaybe :: E.SqlExpr (E.Value (Maybe Day)) -> E.SqlExpr (E.Value (Maybe (Unbounded Day)))
-esqPgSqlDayToUnboundedMaybe = veryUnsafeCoerceSqlExprValue
+esqPgSqlDayToUnboundedMaybe = E.veryUnsafeCoerceSqlExprValue
 
 
 -- | Construct a ROW in PostgreSQL
@@ -206,7 +211,10 @@ esqUnsafeCastAs _ (E.EValueReference _ _) = throw (userError "cannot 'cast as' o
 
 -- ARRAY [] 这样的式子会被理解为 int[] ，与 bigint[] 不匹配
 esqPgSqlBigIntArrayVal :: ToBackendKey E.SqlBackend a => [Key a] -> E.SqlExpr (E.Value [Key a])
-esqPgSqlBigIntArrayVal = veryUnsafeCoerceSqlExprValue . esqUnsafeCastAs "BIGINT[]" . esqPgSqlArray . map E.val
+esqPgSqlBigIntArrayVal = E.veryUnsafeCoerceSqlExprValue . esqUnsafeCastAs "BIGINT[]" . esqPgSqlArray . map E.val
+
+esqPgSqlBigIntArrayValMay :: ToBackendKey E.SqlBackend a => [Maybe (Key a)] -> E.SqlExpr (E.Value [Maybe (Key a)])
+esqPgSqlBigIntArrayValMay = E.veryUnsafeCoerceSqlExprValue . esqUnsafeCastAs "BIGINT[]" . esqPgSqlArray . map E.val
 
 
 esqList :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.ValueList a)
