@@ -204,6 +204,11 @@ esqUnsafeCastAs _ (E.EValueReference _ _) = throw (userError "cannot 'cast as' o
 #endif
 
 
+-- ARRAY [] 这样的式子会被理解为 int[] ，与 bigint[] 不匹配
+esqPgSqlBigIntArrayVal :: ToBackendKey E.SqlBackend a => [Key a] -> E.SqlExpr (E.Value [Key a])
+esqPgSqlBigIntArrayVal = veryUnsafeCoerceSqlExprValue . esqUnsafeCastAs "BIGINT[]" . esqPgSqlArray . map E.val
+
+
 esqList :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.ValueList a)
 esqList [] = E.EEmptyList
 esqList args =
