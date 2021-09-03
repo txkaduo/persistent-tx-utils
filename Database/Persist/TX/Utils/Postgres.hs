@@ -7,13 +7,21 @@ import           Control.Monad.Logger
 import           Data.Proxy
 import           Database.Persist
 import           Database.Persist.Sql
+#if MIN_VERSION_persistent(2, 12, 0)
+import           Database.Persist.SqlBackend.Internal (connEscapeRawName)
+#endif
 import           Control.Monad.Trans.Maybe
 import qualified Database.PostgreSQL.Simple as PGS
 -- }}}1
 
 
 data PgColumnInfo = PgColumnInfo
-  { pgColInfoName       :: DBName
+  { pgColInfoName       ::
+#if MIN_VERSION_persistent(2, 12, 0)
+                           FieldNameDB
+#else
+                           DBName
+#endif
   , pgColInfoOrdinalNum :: Int
   }
 
@@ -25,21 +33,36 @@ pgSqlGetTableColumnInfo :: forall record m.
                         -> SqlPersistT m [PgColumnInfo]
 -- {{{1
 pgSqlGetTableColumnInfo _ = do
-  rows <- rawSql sql [ toPersistValue (unDBName $ tableDBName dummy_rec) ]
+  rows <- rawSql sql [ toPersistValue table_name_s ]
 
   return $
     flip map rows $ \ (Single name, Single num) ->
-      PgColumnInfo (DBName name) num
+      PgColumnInfo
+#if MIN_VERSION_persistent(2, 12, 0)
+        (FieldNameDB name)
+#else
+        (DBName name)
+#endif
+        num
 
   where
     sql = "SELECT attname, attnum FROM pg_attribute WHERE attrelid = ? :: regclass"
 
     dummy_rec = error "entity record forced" :: record
+
+    table_name_s =
+#if MIN_VERSION_persistent(2, 12, 0)
+        unEntityNameDB
+#else
+        unDBName
+#endif
+           $ tableDBName dummy_rec
+
 -- }}}1
 
 
 data PgIndexInfo = PgIndexInfo
-  { pgIndexInfoName      :: DBName
+  { pgIndexInfoName      :: Text
   , pgIndexInfoIsUnique  :: Bool
   , pgIndexInfoIsPrimary :: Bool
   }
@@ -63,20 +86,20 @@ pgSqlGetIndexInfoByFields fields = runMaybeT $ do
                       Just info -> return $ pgColInfoOrdinalNum info
 
                       Nothing -> do
-                        $logError $ "field '" <> unDBName field_name <> "' does not exist."
+                        $logError $ "field '" <> un_field_name field_name <> "' does not exist."
                         mzero
 
   let indkey_str = intercalate " " (map tshow ord_num_list)
 
   rows <- lift $ rawSql
                   "SELECT indexrelid,indisunique,indisprimary FROM pg_index WHERE indrelid = ? :: regclass AND indislive=? AND indkey=?"
-                  [ toPersistValue $ unDBName $ tableDBName dummy_rec
+                  [ toPersistValue $ un_table_name $ tableDBName dummy_rec
                   , toPersistValue True
                   , toPersistValue indkey_str
                   ]
 
   when (null rows) $ do
-    $logDebug $ "Table index does not exist: " <> indkey_str <> " on table " <> unDBName (tableDBName dummy_rec)
+    $logDebug $ "Table index does not exist: " <> indkey_str <> " on table " <> un_table_name (tableDBName dummy_rec)
 
 #if MIN_VERSION_persistent(2, 9, 0)
   (Single (PersistLiteralEscaped idx_oid), Single is_unique, Single is_primary)
@@ -96,14 +119,29 @@ pgSqlGetIndexInfoByFields fields = runMaybeT $ do
                     ]
 
   when (null rows) $ do
-    $logDebug $ "Oid of table index does not exist: " <> indkey_str <> " on table " <> unDBName (tableDBName dummy_rec)
+    $logDebug $ "Oid of table index does not exist: " <> indkey_str <> " on table " <> un_table_name (tableDBName dummy_rec)
                 <> ", oid=" <> decodeUtf8 idx_oid
 
   Single idx_name <- MaybeT $ return $ listToMaybe rows2
 
-  return $ PgIndexInfo (DBName idx_name) is_unique is_primary
+  return $ PgIndexInfo idx_name is_unique is_primary
+
   where
     dummy_rec = error "entity record forced" :: record
+
+    un_field_name =
+#if MIN_VERSION_persistent(2, 12, 0)
+                    unFieldNameDB
+#else
+                    unDBName
+#endif
+
+    un_table_name =
+#if MIN_VERSION_persistent(2, 12, 0)
+                    unEntityNameDB
+#else
+                    unDBName
+#endif
 -- }}}1
 
 
@@ -122,7 +160,7 @@ pgSqlCreateIndexInfoByFields :: forall record m opts_t.
 #endif
                                , Element opts_t ~ CreateIndexOpt
                                )
-                             => Maybe DBName
+                             => Maybe Text
                              -> opts_t
                              -> [SomeEntityField record]
                              -> SqlPersistT m ()
@@ -142,7 +180,7 @@ pgSqlCreateIndexInfoByFields m_index_name opts fields = do
               , if CreateIndexConcurrently `oelem` opts
                    then "CONCURRENTLY"
                    else ""
-              , fromMaybe "" $ connEscapeName conn <$> m_index_name
+              , fromMaybe "" $ conn_escape_name conn <$> m_index_name
               , "ON"
               , table_name
               , "("
@@ -153,6 +191,13 @@ pgSqlCreateIndexInfoByFields m_index_name opts fields = do
   rawExecute sql []
   where
     dummy_rec = error "entity record forced" :: record
+
+    conn_escape_name =
+#if MIN_VERSION_persistent(2, 12, 0)
+                    connEscapeRawName
+#else
+                    \ x -> connEscapeName x . DBName
+#endif
 -- }}}1
 
 
@@ -167,7 +212,7 @@ pgSqlCreateIndexInfoByFieldsIfNotExist :: forall record m opts_t.
 #endif
                                          , Element opts_t ~ CreateIndexOpt
                                          )
-                                       => Maybe DBName
+                                       => Maybe Text
                                        -> opts_t
                                        -> [SomeEntityField record]
                                        -> SqlPersistT m ()
@@ -183,7 +228,7 @@ pgSqlCreateIndexInfoByFieldsIfNotExist m_index_name opts fields = do
           let old_name = pgIndexInfoName info
 
           unless (old_name == index_name) $ do
-            $logWarn $ "An index with the same fields exists but with a different name (creation cancelled): " <> unDBName old_name
+            $logWarn $ "An index with the same fields exists but with a different name (creation cancelled): " <> old_name
 -- }}}1
 
 
@@ -198,7 +243,7 @@ pgSqlCreateIndexInfoByFieldsIfNotExist1 :: forall record m opts_t typ1.
 #endif
                                          , Element opts_t ~ CreateIndexOpt
                                          )
-                                       => Maybe DBName
+                                       => Maybe Text
                                        -> opts_t
                                        -> EntityField record typ1
                                        -> SqlPersistT m ()
@@ -220,7 +265,7 @@ pgSqlCreateIndexInfoByFieldsIfNotExist2 :: forall record m opts_t typ1 typ2.
 #endif
                                          , Element opts_t ~ CreateIndexOpt
                                          )
-                                       => Maybe DBName
+                                       => Maybe Text
                                        -> opts_t
                                        -> EntityField record typ1
                                        -> EntityField record typ2

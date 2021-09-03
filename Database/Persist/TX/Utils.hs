@@ -13,6 +13,10 @@ import Data.List (dropWhileEnd)
 import Data.Time
 import Database.Persist
 import Database.Persist.Sql
+#if MIN_VERSION_persistent(2, 12, 0)
+import Database.Persist.SqlBackend.Internal
+#endif
+
 import Database.PostgreSQL.Simple.Time
 import System.FilePath
 
@@ -542,8 +546,15 @@ cput ::
 cput (Entity k v) = S.modify $ insertMap k v
 
 
-getFieldDBName :: PersistEntity a => EntityField a typ -> DBName
+getFieldDBName :: PersistEntity a
+               => EntityField a typ
+#if MIN_VERSION_persistent(2, 12, 0)
+               -> FieldNameDB
+#else
+               -> DBName
+#endif
 getFieldDBName = fieldDB . persistFieldDef
+
 
 escFieldDBName :: PersistEntity a =>
 #if MIN_VERSION_persistent(2, 0, 0)
@@ -552,7 +563,14 @@ escFieldDBName :: PersistEntity a =>
     Connection
 #endif
     -> EntityField a typ -> Text
-escFieldDBName conn = connEscapeName conn . getFieldDBName
+escFieldDBName conn =
+#if MIN_VERSION_persistent(2, 12, 0)
+  connEscapeFieldName conn
+#else
+  connEscapeName conn
+#endif
+    . getFieldDBName
+
 
 escEntityDBName :: (PersistEntity a, Monad m) =>
 #if MIN_VERSION_persistent(2, 0, 0)
@@ -561,7 +579,13 @@ escEntityDBName :: (PersistEntity a, Monad m) =>
     Connection
 #endif
     -> m a -> Text
-escEntityDBName conn = connEscapeName conn . entityDB . entityDef
+escEntityDBName conn =
+#if MIN_VERSION_persistent(2, 12, 0)
+  connEscapeTableName conn
+#else
+  connEscapeName conn . entityDB
+#endif
+   . entityDef
 
 
 sinkEntityAsMap :: (Monad m, Ord (Key a))

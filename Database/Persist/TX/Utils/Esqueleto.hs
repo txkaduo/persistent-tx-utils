@@ -2,11 +2,16 @@ module Database.Persist.TX.Utils.Esqueleto where
 
 -- {{{1
 import           ClassyPrelude                   hiding (delete)
-import           Control.Exception (throw)
 import qualified Data.List.NonEmpty as LNE
 import qualified Data.Text.Lazy.Builder          as TLB
 import           Database.Persist
+
+#if MIN_VERSION_esqueleto(3, 5, 0)
+import qualified Database.Esqueleto.Legacy       as E
+#else
+import           Control.Exception (throw)
 import qualified Database.Esqueleto              as E
+#endif
 
 #if MIN_VERSION_esqueleto(3, 4, 0)
 import qualified Database.Esqueleto.Internal.Internal as E
@@ -175,8 +180,11 @@ esqPgSqlRow4 x1 x2 x3 x4 = E.unsafeSqlFunction "" (x1, x2, x3, x4)
 
 
 -- | ARRAY[?, ?, ?]
-#if MIN_VERSION_esqueleto(3, 0, 0)
 esqPgSqlArrayVal :: PersistField a => [a] -> E.SqlExpr (E.Value [a])
+#if MIN_VERSION_esqueleto(3, 5, 0)
+esqPgSqlArrayVal vals = E.ERaw E.noMeta $ \ _need_parens _info ->
+                          ("ARRAY[" <> uncommas ("?" <$ vals) <> "]", map toPersistValue vals)
+#elif MIN_VERSION_esqueleto(3, 0, 0)
 esqPgSqlArrayVal vals = E.ERaw E.Never $ const $
   ("ARRAY[" <> uncommas ("?" <$ vals) <> "]", map toPersistValue vals)
 #else
@@ -191,22 +199,40 @@ esqPgSqlArrayVal xs = E.unsafeSqlValue $ TLB.fromText "ARRAY[" <> args <> "]"
 #if MIN_VERSION_esqueleto(3, 0, 0)
 esqPgSqlArray :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.Value [a])
 esqPgSqlArray args =
+#if MIN_VERSION_esqueleto(3, 5, 0)
+  E.ERaw E.noMeta $ \ need_parens info ->
+    let (argsTLB, argsVals) =
+          uncommas' $ map (\(E.ERaw _ f) -> f need_parens info) $ E.toArgList args
+    in ("ARRAY[" <> argsTLB <> "]", argsVals)
+#else
   E.ERaw E.Never $ \info ->
     let (argsTLB, argsVals) =
           uncommas' $ map (\(E.ERaw _ f) -> f info) $ E.toArgList args
     in ("ARRAY[" <> argsTLB <> "]", argsVals)
+#endif
 
 
 -- | CAST (expression AS type)
 esqUnsafeCastAs :: Text -> E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value b)
-esqUnsafeCastAs t (E.ERaw p f) = E.ERaw E.Never $
+#if MIN_VERSION_esqueleto(3, 5, 0)
+esqUnsafeCastAs t (E.ERaw meta f) =
+                            E.ERaw meta $
+                                \ need_parens info -> let (b, vals) = f need_parens info
+                                           in ("CAST (" <> parensM need_parens b <> " AS " <> TLB.fromText t <> ")", vals)
+#else
+esqUnsafeCastAs t (E.ERaw p f) =
+                            E.ERaw E.Never $
                                 \ info -> let (b, vals) = f info
                                            in ("CAST (" <> parensM p b <> " AS " <> TLB.fromText t <> ")", vals)
 esqUnsafeCastAs _ (E.ECompositeKey _) = throw (userError "cannot 'cast as' on ECompositeKey")
+
 #if MIN_VERSION_esqueleto(3, 3, 0)
 esqUnsafeCastAs _ (E.EAliasedValue _ _) = throw (userError "cannot 'cast as' on EAliasedValue")
 esqUnsafeCastAs _ (E.EValueReference _ _) = throw (userError "cannot 'cast as' on EValueReference")
 #endif
+
+#endif
+
 
 
 -- ARRAY [] 这样的式子会被理解为 int[] ，与 bigint[] 不匹配
@@ -218,12 +244,20 @@ esqPgSqlBigIntArrayValMay = E.veryUnsafeCoerceSqlExprValue . esqUnsafeCastAs "BI
 
 
 esqList :: [E.SqlExpr (E.Value a)] -> E.SqlExpr (E.ValueList a)
+#if MIN_VERSION_esqueleto(3, 5, 0)
+esqList args = E.ERaw E.noMeta $ \ need_parens info ->
+                let (argsTLB, argsVals) =
+                      uncommas' $ map (\(E.ERaw _ f) -> f need_parens info) $ E.toArgList args
+                in ("(" <> argsTLB <> ")", argsVals)
+#else
 esqList [] = E.EEmptyList
 esqList args =
   E.EList $ E.ERaw E.Never $ \info ->
     let (argsTLB, argsVals) =
           uncommas' $ map (\(E.ERaw _ f) -> f info) $ E.toArgList args
     in ("(" <> argsTLB <> ")", argsVals)
+#endif
+
 #endif
 
 
