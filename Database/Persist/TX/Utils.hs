@@ -693,13 +693,13 @@ instance PersistFieldSql PersistJson where
   sqlType _ = SqlOther "JSON"
 
 instance PersistField PersistJson where
-#if MIN_VERSION_persistent(2, 9, 0)
+#if MIN_VERSION_persistent(2, 11, 0)
   toPersistValue = PersistLiteralEscaped . toStrict . A.encode . unPersistJson
 #else
   toPersistValue = PersistDbSpecific . toStrict . A.encode . unPersistJson
 #endif
 
-#if MIN_VERSION_persistent(2, 9, 0)
+#if MIN_VERSION_persistent(2, 11, 0)
   fromPersistValue (PersistLiteralEscaped bs) =
                                             case A.eitherDecode' $ fromStrict bs of
                                               Left err -> Left $ fromString err
@@ -742,13 +742,13 @@ instance PersistFieldSql PersistJsonb where
   sqlType _ = SqlOther "JSONB"
 
 instance PersistField PersistJsonb where
-#if MIN_VERSION_persistent(2, 9, 0)
+#if MIN_VERSION_persistent(2, 11, 0)
   toPersistValue = PersistLiteralEscaped . toStrict . A.encode . unPersistJsonb
 #else
   toPersistValue = PersistDbSpecific . toStrict . A.encode . unPersistJsonb
 #endif
 
-#if MIN_VERSION_persistent(2, 9, 0)
+#if MIN_VERSION_persistent(2, 11, 0)
   fromPersistValue (PersistLiteralEscaped bs) = case A.eitherDecode' $ fromStrict bs of
                                                   Left err -> Left $ fromString err
                                                   Right x  -> Right $ PersistJsonb x
@@ -788,7 +788,7 @@ instance PersistFieldSql PersistDiffTime where
   sqlType _ = SqlOther "INTERVAL"
 
 instance PersistField PersistDiffTime where
-#if MIN_VERSION_persistent(2, 9, 0)
+#if MIN_VERSION_persistent(2, 11, 0)
   toPersistValue = PersistLiteralEscaped . toStrict . toLazyByteString . nominalDiffTimeToBuilder . unPersistDiffTime
   fromPersistValue (PersistLiteralEscaped bs) = Left $ "TBD: " <> decodeUtf8 bs -- TODO: decode interval from different styles output
   fromPersistValue (PersistLiteral bs) = Left $ "TBD: " <> decodeUtf8 bs -- TODO: decode interval from different styles output
