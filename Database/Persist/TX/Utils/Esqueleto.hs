@@ -494,25 +494,25 @@ esqBetweenClose x (a, b) = x E.>=. a E.&&. x E.<=. b
 
 
 -- | 两次 SQL 查询，一次得到结果列表，另一次得到总数
-esqGetResultsAndTotalNum :: (E.SqlSelect t r, E.From t, MonadIO m)
-                         => (t -> E.SqlQuery ()) -- ^ 过滤条件
+esqGetResultsAndTotalNum :: (E.SqlSelect a r, E.From t, MonadIO m)
+                         => (t -> E.SqlQuery a) -- ^ 过滤条件
                          -> (t -> [E.SqlExpr E.OrderBy])  -- ^ 排序
                          -> Int64                  -- ^ num per page
                          -> Int64                  -- ^ page num (1-based)
                          -> E.SqlReadT m ([r], Int64)  -- ^ result list, total number
 esqGetResultsAndTotalNum filter_record mk_orders npp pn = do
   records <- E.select $ E.from $ \ t -> do
-    filter_record t
+    v <- filter_record t
 
     let orders = mk_orders t
     unless (null orders) $ E.orderBy orders
 
     E.limit npp
     E.offset $ max 0 $ npp * (pn - 1)
-    pure t
+    pure v
 
   cnt <- fmap (fromMaybe 0 . listToMaybe . map E.unValue) $ E.select $ E.from $ \ t -> do
-          filter_record t
+          void $ filter_record t
           return E.countRows
 
   pure (records, cnt)
