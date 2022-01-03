@@ -168,6 +168,10 @@ esqPgSqlDayToUnboundedMaybe :: E.SqlExpr (E.Value (Maybe Day)) -> E.SqlExpr (E.V
 esqPgSqlDayToUnboundedMaybe = E.veryUnsafeCoerceSqlExprValue
 
 
+esqConcat :: E.UnsafeSqlFunctionArgument a => a -> E.SqlExpr (E.Value Text)
+esqConcat = E.unsafeSqlFunction "CONCAT"
+
+
 -- | Construct a ROW in PostgreSQL
 esqPgSqlRow2 :: E.SqlExpr (E.Value a) -> E.SqlExpr (E.Value b) -> E.SqlExpr (E.Value (a, b))
 esqPgSqlRow2 x1 x2 = E.unsafeSqlFunction "" (x1, x2)
