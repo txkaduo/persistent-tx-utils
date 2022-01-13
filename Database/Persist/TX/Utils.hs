@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module Database.Persist.TX.Utils where
 
 -- {{{1
@@ -5,6 +6,7 @@ import ClassyPrelude                        hiding (delete)
 #if !MIN_VERSION_classy_prelude(1, 5, 0)
 import Control.DeepSeq                      (NFData(..), deepseq)
 #endif
+import Data.Proxy (Proxy(..))
 import Data.Aeson                           (Value, ToJSON(..), FromJSON(..))
 import Data.ByteString.Builder              (toLazyByteString)
 import Data.Char
@@ -809,6 +811,23 @@ entitiesToMap :: (ContainerKey c ~ Key record, MapValue c ~ record, IsMap c)
               => [Entity record]
               -> c
 entitiesToMap = mapFromList . map (entityKey &&& entityVal)
+
+
+-- | 字段名列表
+entityFieldHaskellNames :: forall record. (PersistEntity record) => Proxy record -> [ HaskellName ]
+entityFieldHaskellNames _ =
+  map fieldHaskell $ entityFields $ entityDef (Nothing :: Maybe record)
+
+
+compareByEntityFieldHaskellNameOrder :: (PersistEntity record) => Proxy record -> Text -> Text -> Ordering
+compareByEntityFieldHaskellNameOrder p x y =
+  case (m_px, m_py) of
+    (Just px, Just py) -> compare px py
+    _ -> compare x y
+  where
+    names = map unHaskellName $ entityFieldHaskellNames p
+    m_px = L.elemIndex x names
+    m_py = L.elemIndex y names
 
 
 -- | 例如可以把 'get' 的返回值变成 Maybe (Entity a)
