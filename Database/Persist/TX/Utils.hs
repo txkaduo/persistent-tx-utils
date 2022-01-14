@@ -825,7 +825,7 @@ compareByEntityFieldHaskellNameOrder p x y =
     (Just px, Just py) -> compare px py
     _ -> compare x y
   where
-    names = map unHaskellName $ entityFieldHaskellNames p
+    names = "id" : (map unHaskellName $ entityFieldHaskellNames p)
     m_px = L.elemIndex x names
     m_py = L.elemIndex y names
 
