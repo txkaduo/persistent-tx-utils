@@ -814,9 +814,23 @@ entitiesToMap = mapFromList . map (entityKey &&& entityVal)
 
 
 -- | 字段名列表
-entityFieldHaskellNames :: forall record. (PersistEntity record) => Proxy record -> [ HaskellName ]
-entityFieldHaskellNames _ =
-  map fieldHaskell $ entityFields $ entityDef (Nothing :: Maybe record)
+entityFieldHaskellNames :: forall record. (PersistEntity record)
+                        => Proxy record
+#if MIN_VERSION_persistent(2, 12, 0)
+                        -> [ FieldNameHS ]
+#else
+                        -> [ HaskellName ]
+#endif
+entityFieldHaskellNames _p =
+#if MIN_VERSION_persistent(2, 12, 0)
+  map fieldHaskell $
+    getEntityFields $
+      entityDef _p
+#else
+  map fieldHaskell $
+    entityFields $
+      entityDef (Nothing :: Maybe record)
+#endif
 
 
 compareByEntityFieldHaskellNameOrder :: (PersistEntity record) => Proxy record -> Text -> Text -> Ordering
@@ -825,7 +839,15 @@ compareByEntityFieldHaskellNameOrder p x y =
     (Just px, Just py) -> compare px py
     _ -> compare x y
   where
-    names = "id" : (map unHaskellName $ entityFieldHaskellNames p)
+    names = "id" :
+              ( map
+#if MIN_VERSION_persistent(2, 12, 0)
+                unFieldNameHS
+#else
+                unHaskellName
+#endif
+                (entityFieldHaskellNames p)
+              )
     m_px = L.elemIndex x names
     m_py = L.elemIndex y names
 
