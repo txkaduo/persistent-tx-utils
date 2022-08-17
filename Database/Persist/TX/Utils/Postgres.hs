@@ -3,6 +3,8 @@ module Database.Persist.TX.Utils.Postgres where
 
 -- {{{1 imports
 import           ClassyPrelude
+import qualified Control.Exception.Safe as ExSafe
+import qualified UnliftIO as UI
 import           Control.Monad.Logger
 import           Data.Proxy
 import           Database.Persist
@@ -12,6 +14,7 @@ import           Database.Persist.SqlBackend.Internal (connEscapeRawName)
 #endif
 import           Control.Monad.Trans.Maybe
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Database.PostgreSQL.Simple.Errors as PGS
 -- }}}1
 
 
@@ -280,3 +283,35 @@ pgSqlCreateIndexInfoByFieldsIfNotExist2 m_index_name opts field1 field2 = do
 pgSqlConnTxSetIsolationSerializable :: MonadIO m => PGS.Connection -> m ()
 pgSqlConnTxSetIsolationSerializable conn = liftIO $
   void $ PGS.execute_ conn "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE"
+
+
+-- | When '40001' exception is caught, retry the same function
+retryIfPgSqlSerializationError :: (ExSafe.MonadCatch m)
+                               => (Int -> PGS.SqlError -> m ())
+                               -> m a
+                               -> m a
+retryIfPgSqlSerializationError before_retry f = go 0
+  where
+    match_ex ex = guard (PGS.isSerializationError ex) >> pure ex
+
+    go rc = do
+      ExSafe.catchJust match_ex f $ \ ex -> do
+        before_retry rc ex
+        go (rc + 1)
+
+
+retryIfPgSqlSerializationErrorUnliftIO :: (UI.MonadUnliftIO m)
+                                       => (Int -> PGS.SqlError -> m ())
+                                       -> m a
+                                       -> m a
+retryIfPgSqlSerializationErrorUnliftIO before_retry f = go 0
+  where
+    match_ex ex = guard (PGS.isSerializationError ex) >> pure ex
+
+    go rc = do
+      UI.catchJust match_ex f $ \ ex -> do
+        before_retry rc ex
+        go (rc + 1)
+
+
+-- vim: set foldmethod=marker:

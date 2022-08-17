@@ -45,6 +45,8 @@ library
                      , uuid
                      , path-pieces
                      , filepath
+                     , safe-exceptions
+                     , unliftio
 
   default-language:    Haskell2010
 
