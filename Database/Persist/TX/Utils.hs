@@ -653,9 +653,14 @@ unsafeRemoveEscapeForSqlLikeT = pack . unsafeRemoveEscapeForSqlLike . unpack
 contains :: EntityField v Text -> Text -> Filter v
 contains = contains2 id
 
-contains2 :: (PersistField a) =>
-    (Text -> a)
-    -> EntityField v a -> Text -> Filter v
+containsMay :: EntityField v (Maybe Text) -> Text -> Filter v
+containsMay = contains2 Just
+
+contains2 :: (PersistField a)
+          => (Text -> a)
+          -> EntityField v a
+          -> Text
+          -> Filter v
 contains2 conv field val = Filter field
 #if MIN_VERSION_persistent(2, 10, 0)
                         (FilterValue v)
