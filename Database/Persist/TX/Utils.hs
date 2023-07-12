@@ -7,6 +7,7 @@ import ClassyPrelude                        hiding (delete)
 import Control.DeepSeq                      (NFData(..), deepseq)
 #endif
 import Data.Proxy (Proxy(..))
+import Data.Kind (Type)
 import Data.Aeson                           (Value, ToJSON(..), FromJSON(..))
 import Data.ByteString.Builder              (toLazyByteString)
 import Data.Char
@@ -30,7 +31,7 @@ import qualified Data.List                  as L
 import Control.Monad.State.Strict           (StateT)
 import qualified Control.Monad.State.Strict as S
 
-import Language.Haskell.TH
+import Language.Haskell.TH hiding (Type)
 -- }}}1
 
 
@@ -91,7 +92,7 @@ type DBMonadBase m = (MonadBaseControl IO m)
 
 class DBActionRunner a where
     -- | This should be a monad transformer
-    type DBAction a :: (* -> *) -> * -> *
+    type DBAction a :: (Type -> Type) -> Type -> Type
     runDBWith :: DBMonadBase m => a -> DBAction a m r -> m r
 
 
@@ -215,6 +216,9 @@ insertOrReplace' :: ( PersistQueryUniqueMonad backend n m
 #if MIN_VERSION_persistent(2, 10, 0)
                     , AtLeastOneUniqueKey val
 #endif
+#if MIN_VERSION_persistent(2, 14, 0)
+                    , SafeToInsert val
+#endif
                     )
                  => val
                  -> m (Either (Key val) (Key val))
@@ -230,6 +234,9 @@ insertOrReplace :: ( PersistQueryUniqueMonad backend n m
 #if MIN_VERSION_persistent(2, 10, 0)
                     , AtLeastOneUniqueKey val
 #endif
+#if MIN_VERSION_persistent(2, 14, 0)
+                    , SafeToInsert val
+#endif
                     )
                  => val
                  -> m (Key val)
@@ -244,6 +251,9 @@ insertOrUpdateWithList ::
     , IsPersistMonadOf backend n m val
 #if MIN_VERSION_persistent(2, 10, 0)
     , AtLeastOneUniqueKey val
+#endif
+#if MIN_VERSION_persistent(2, 14, 0)
+    , SafeToInsert val
 #endif
     ) =>
     [Filter val]
@@ -289,6 +299,9 @@ replaceWithList ::
 #endif
 #if MIN_VERSION_persistent(2, 10, 0)
     , AtLeastOneUniqueKey val
+#endif
+#if MIN_VERSION_persistent(2, 14, 0)
+    , SafeToInsert val
 #endif
     ) =>
     [Filter val]
@@ -423,6 +436,9 @@ insertOrUpdate ::
 
 #if MIN_VERSION_persistent(2, 10, 0)
     , AtLeastOneUniqueKey val
+#endif
+#if MIN_VERSION_persistent(2, 14, 0)
+    , SafeToInsert val
 #endif
     ) =>
     val                 -- ^ new value to insert
@@ -913,6 +929,9 @@ selectKeysListWithDeleted is_deleted filters opts =
 -- CAUTION: 若 a 包含多个 Unique a, 可能有死循环．请用 checkUniqueInsertRetry
 insertUniqueEntityRetry :: ( PersistUniqueMonad backend n m
                            , IsPersistMonadOf backend n m a
+#if MIN_VERSION_persistent(2, 14, 0)
+                           , SafeToInsert a
+#endif
                            )
                         => (a -> m (Maybe a))
                         -> a
@@ -929,6 +948,9 @@ insertUniqueEntityRetry mk_new rec0 = loop rec0
 -- | 效果类似于 insertUniqueEntityRetry，不过能处理有多个unique存在的情况
 checkUniqueInsertRetry :: ( PersistUniqueMonad backend n m
                           , IsPersistMonadOf backend n m a
+#if MIN_VERSION_persistent(2, 14, 0)
+                          , SafeToInsert a
+#endif
                           , Eq (Unique a)
                           )
                        => (a -> Unique a)

@@ -75,6 +75,7 @@ library
               DerivingStrategies
               StandaloneDeriving
               DataKinds
+              TypeOperators
 
   if flag(dev)
       cpp-options:   -DDEVELOPMENT
