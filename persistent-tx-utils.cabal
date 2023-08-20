@@ -47,6 +47,7 @@ library
                      , filepath
                      , safe-exceptions
                      , unliftio
+                     , resource-pool
 
   default-language:    Haskell2010
 

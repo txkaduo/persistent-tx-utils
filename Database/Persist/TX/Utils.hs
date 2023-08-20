@@ -30,9 +30,17 @@ import qualified Data.List                  as L
 
 import Control.Monad.State.Strict           (StateT)
 import qualified Control.Monad.State.Strict as S
+import Data.Pool (Pool)
 
 import Language.Haskell.TH hiding (Type)
 -- }}}1
+
+
+class HasSqlBackendPool a where
+  getSqlBackendPool :: a -> Pool SqlBackend
+
+instance HasSqlBackendPool (Pool SqlBackend) where
+  getSqlBackendPool = id
 
 
 type SqlWriteSource m a = forall backend. SqlBackendCanWrite backend =>
